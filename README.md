@@ -35,10 +35,10 @@ A modern React application built with Vite, TypeScript, Tailwind CSS, and shadcn
 
 This project uses the shadcn/ui CLI. To add a new component, run:
 
-npx shadcn@latest add <component-name>
+npx shadcn@latest add component-name
 
 For example:
-
+ ```bash 
 npx shadcn@latest add dialog
 npx shadcn@latest add dropdown-menu
 npx shadcn@latest add form
