@@ -4,9 +4,9 @@
     "target": "es2023",
     "lib": ["ES2023", "DOM"],
     // "baseUrl": ".",
-    // "paths": {
-    //   "@/*": ["./src/*"]
-    // },
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     "types": ["vite/client"],
     "allowArbitraryExtensions": true,
     "skipLibCheck": true,
