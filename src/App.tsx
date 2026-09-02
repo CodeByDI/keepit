@@ -1,30 +1,45 @@
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useEffect } from "react"
+import { AppSidebar } from "@/components/app-sidebar"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+} from "@/components/ui/breadcrumb"
+import { Separator } from "@/components/ui/separator"
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar"
 
 function App() {
+  const [isDark, setIsDark] = useState(false)
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", isDark)
+  }, [isDark])
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <Card className="w-[420px]">
-        <CardHeader>
-          <CardTitle>Welcome to keepit</CardTitle>
-          <CardDescription>
-            Your project is ready to go!
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-gray-600">
-            Start building your app by adding components. Run:
-          </p>
-          <code className="block mt-2 p-2 bg-gray-100 rounded text-sm">
-            npx shadcn@latest add [component-name]
-          </code>
-        </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button variant="outline">Learn More</Button>
-          <Button>Get Started</Button>
-        </CardFooter>
-      </Card>
-    </div>
+    <SidebarProvider>
+      <AppSidebar isDark={isDark} onToggleTheme={() => setIsDark(prev => !prev)} />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <Separator orientation="vertical" className="mr-2 h-4" />
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbPage>Start</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </header>
+        <div className="flex flex-1 flex-col gap-4 p-4">
+          <p className="text-muted-foreground">Content goes here</p>
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
   )
 }
 
