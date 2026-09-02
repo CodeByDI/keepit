@@ -1,0 +1,126 @@
+import { FireIcon, CheckIcon } from "@phosphor-icons/react"
+import type { Icon } from "@phosphor-icons/react"
+
+type Habit = {
+  id: number
+  title: string
+  reminder: string
+  streak: number
+  done: boolean
+  icon?: React.ElementType<React.ComponentProps<typeof Icon>>
+}
+
+// One color per habit slot (cycles through chart palette)
+const HABIT_COLORS = [
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
+]
+
+function HabitRow({ habit, index, onToggle }: { habit: Habit; index: number; onToggle: (id: number) => void }) {
+  const color = HABIT_COLORS[index % HABIT_COLORS.length]
+  const HabitIcon = habit.icon
+
+  return (
+    <div className="flex items-center gap-3 py-3 border-b last:border-0 cursor-pointer rounded-lg transition-colors hover:bg-muted/50 -mx-2 px-2">
+      {/* Icon badge */}
+      <div
+        className="size-9 rounded-xl flex items-center justify-center shrink-0"
+        style={{ backgroundColor: `color-mix(in oklch, ${color} 15%, transparent)` }}
+      >
+        {HabitIcon && <HabitIcon size={18} style={{ color }} />}
+      </div>
+
+      {/* Title + reminder */}
+      <div className="flex-1 min-w-0">
+        <p
+          className="text-sm font-medium truncate"
+          style={{ color: habit.done ? "var(--muted-foreground)" : "var(--foreground)",
+                   textDecoration: habit.done ? "line-through" : "none" }}
+        >
+          {habit.title}
+        </p>
+        <p className="text-xs text-muted-foreground opacity-60">{habit.reminder}</p>
+      </div>
+
+      {/* Streak */}
+      <span className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+        <FireIcon size={16} />
+        {habit.streak}
+      </span>
+
+      {/* Check button */}
+      <button
+        onClick={() => onToggle(habit.id)}
+        className="size-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors"
+        style={{
+          borderColor: habit.done ? color : "var(--border)",
+          backgroundColor: habit.done ? color : "transparent",
+        }}
+      >
+        {habit.done && <CheckIcon size={12} weight="bold" color="white" />}
+      </button>
+    </div>
+  )
+}
+
+export function HabitList({ habits, onToggle }: { habits: Habit[]; onToggle: (id: number) => void }) {
+  const remaining = habits.filter((h) => !h.done)
+  const done = habits.filter((h) => h.done)
+
+  const doneCount = habits.filter((h) => h.done).length
+
+  return (
+    <div className="flex flex-col gap-3">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-normal uppercase tracking-widest text-muted-foreground opacity-60">Idag</p>
+        <div className="flex items-center gap-2">
+          {habits.map((h, i) => {
+            const color = HABIT_COLORS[i % HABIT_COLORS.length]
+            return (
+              <div
+                key={h.id}
+                className="size-3 rounded-full transition-colors"
+                style={{ backgroundColor: h.done ? color : "var(--border)" }}
+              />
+            )
+          })}
+          <span className="text-xs text-muted-foreground ml-1 opacity-60">
+            {doneCount} av {habits.length}
+          </span>
+        </div>
+      </div>
+
+      {/* Återstår */}
+      {remaining.length > 0 && (
+        <div className="rounded-xl border bg-card px-4">
+          <div className="py-3 border-b">
+            <p className="text-xs font-normal uppercase tracking-widest text-muted-foreground opacity-60">
+              Återstår · {remaining.length}
+            </p>
+          </div>
+          {remaining.map((h) => (
+            <HabitRow key={h.id} habit={h} index={habits.findIndex((x) => x.id === h.id)} onToggle={onToggle} />
+          ))}
+        </div>
+      )}
+
+      {/* Klara */}
+      {done.length > 0 && (
+        <div className="rounded-xl border bg-card px-4">
+          <div className="py-3 border-b">
+            <p className="text-xs font-normal uppercase tracking-widest text-muted-foreground opacity-60">
+              Klara · {done.length}
+            </p>
+          </div>
+          {done.map((h) => (
+            <HabitRow key={h.id} habit={h} index={habits.findIndex((x) => x.id === h.id)} onToggle={onToggle} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}

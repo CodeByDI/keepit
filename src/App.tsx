@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
+import { StartPage } from "@/pages/StartPage"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -35,8 +36,8 @@ function App() {
             </BreadcrumbList>
           </Breadcrumb>
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4">
-          <p className="text-muted-foreground">Content goes here</p>
+        <div className="flex flex-1 flex-col">
+          <StartPage />
         </div>
       </SidebarInset>
     </SidebarProvider>
