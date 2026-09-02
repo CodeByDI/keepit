@@ -1,8 +1,6 @@
 import { useState } from "react"
 
 import {
-  ArrowLeft,
-  ArrowRight,
   Barbell,
   BookOpen,
   Check,
@@ -245,34 +243,14 @@ export default function Calendar() {
     <div className="w-full max-w-[900px]">
       {/* HEADER */}
 
-      <header className="mb-6 flex items-start justify-between border-b pb-5">
-        <div>
-          <h1 className="text-[22px] font-bold tracking-[-0.04em] text-primary">
-            Kalender
-          </h1>
+      <header className="mb-6 border-b pb-5">
+        <h1 className="text-[22px] font-bold tracking-[-0.04em] text-primary">
+          Kalender
+        </h1>
 
-          <p className="mt-1 text-xs text-muted-foreground">
-            Augusti 2026
-          </p>
-        </div>
-
-        <div className="flex gap-1">
-          <button
-            type="button"
-            className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground"
-            aria-label="Föregående månad"
-          >
-            <ArrowLeft size={13} />
-          </button>
-
-          <button
-            type="button"
-            className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground"
-            aria-label="Nästa månad"
-          >
-            <ArrowRight size={13} />
-          </button>
-        </div>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Augusti 2026
+        </p>
       </header>
 
       {/* MÅNADSRESULTAT */}
@@ -319,8 +297,7 @@ export default function Calendar() {
                   <span
                     className="h-[7px] w-[7px] rounded-full"
                     style={{
-                      background:
-                        habit.color,
+                      background: habit.color,
                     }}
                   />
 
@@ -355,8 +332,7 @@ export default function Calendar() {
               date.currentMonth
 
             const isSelected =
-              selectedDay.day ===
-                date.day &&
+              selectedDay.day === date.day &&
               selectedDay.currentMonth ===
                 date.currentMonth
 
@@ -404,9 +380,7 @@ export default function Calendar() {
                   }
                 >
                   <ProgressRing
-                    completed={
-                      date.completed
-                    }
+                    completed={date.completed}
                   />
                 </div>
               </button>
@@ -465,8 +439,7 @@ export default function Calendar() {
                   className="text-orange-500"
                 />
 
-                Streak{" "}
-                {selectedDay.streak}
+                Streak {selectedDay.streak}
               </span>
 
               <span className="flex items-center gap-1 rounded-full border bg-muted px-2 py-1 text-[9px]">
@@ -488,8 +461,7 @@ export default function Calendar() {
           const Icon = habit.icon
 
           const completed =
-            index <
-            selectedDay.completed
+            index < selectedDay.completed
 
           return (
             <div
@@ -503,10 +475,8 @@ export default function Calendar() {
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border"
                 style={{
                   color: habit.color,
-                  background:
-                    habit.background,
-                  borderColor:
-                    habit.color,
+                  background: habit.background,
+                  borderColor: habit.color,
                 }}
               >
                 <Icon size={14} />
