@@ -1,5 +1,5 @@
 import { FireIcon, CheckIcon } from "@phosphor-icons/react"
-import type { Icon } from "@phosphor-icons/react"
+import { useNavigate } from "react-router-dom"
 
 type Habit = {
   id: number
@@ -7,7 +7,7 @@ type Habit = {
   reminder: string
   streak: number
   done: boolean
-  icon?: React.ElementType<React.ComponentProps<typeof Icon>>
+  icon?: React.ElementType
 }
 
 // One color per habit slot (cycles through chart palette)
@@ -22,9 +22,13 @@ const HABIT_COLORS = [
 function HabitRow({ habit, index, onToggle }: { habit: Habit; index: number; onToggle: (id: number) => void }) {
   const color = HABIT_COLORS[index % HABIT_COLORS.length]
   const HabitIcon = habit.icon
+  const navigate = useNavigate()
 
   return (
-    <div className="flex items-center gap-3 py-3 border-b last:border-0 cursor-pointer rounded-lg transition-colors hover:bg-muted/50 -mx-2 px-2">
+    <div
+      className="flex items-center gap-3 py-3 border-b last:border-0 cursor-pointer rounded-lg transition-colors hover:bg-muted/50 -mx-2 px-2"
+      onClick={() => navigate(`/habits/${habit.id}`)}
+    >
       {/* Icon badge */}
       <div
         className="size-9 rounded-xl flex items-center justify-center shrink-0"
@@ -53,7 +57,7 @@ function HabitRow({ habit, index, onToggle }: { habit: Habit; index: number; onT
 
       {/* Check button */}
       <button
-        onClick={() => onToggle(habit.id)}
+        onClick={(e) => { e.stopPropagation(); onToggle(habit.id) }}
         className="size-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors"
         style={{
           borderColor: habit.done ? color : "var(--border)",

@@ -5,6 +5,9 @@ import { PlusIcon, BookOpenIcon, CodeIcon, PersonSimpleRunIcon, BarbellIcon, Dro
 import { StreakCard } from "@/components/streak-card"
 import { WeeklyCard } from "@/components/weekly-card"
 import { HabitList } from "@/components/habit-list"
+import { SidebarTrigger } from "@/components/ui/sidebar"
+import { Separator } from "@/components/ui/separator"
+import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/components/ui/breadcrumb"
 
 // ─── Static data (replace with API later) ─────────────────────────────────────
 
@@ -34,16 +37,6 @@ const initialHabits = [
   { id: 5, title: "Drick 2L vatten", reminder: "Dagligen · 20:00",   streak: 5,  done: true,  icon: DropIcon },
 ]
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function getTodayLabel() {
-  const date = new Date()
-  const weekday = date.toLocaleDateString("sv-SE", { weekday: "long" })
-  const day = date.toLocaleDateString("sv-SE", { day: "numeric" })
-  const month = date.toLocaleDateString("sv-SE", { month: "short" })
-  return `Idag, ${weekday} ${day} ${month}`
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function StartPage() {
@@ -71,6 +64,18 @@ export function StartPage() {
   )
 
   return (
+    <>
+    <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+      <SidebarTrigger className="-ml-1" />
+      <Separator orientation="vertical" className="mr-2 h-4" />
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbPage>Start</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+    </header>
     <div className="flex flex-col gap-6 p-6 max-w-4xl mx-auto w-full">
 
       {/* Header */}
@@ -95,5 +100,6 @@ export function StartPage() {
 
       <NewHabitDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />
     </div>
+    </>
   )
 }

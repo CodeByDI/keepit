@@ -1,18 +1,9 @@
 import { useState, useEffect } from "react"
+import { Routes, Route } from "react-router-dom"
 import { AppSidebar } from "@/components/app-sidebar"
 import { StartPage } from "@/pages/StartPage"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbList,
-  BreadcrumbPage,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar"
+import { HabitDetailPage } from "@/pages/HabitDetailPage"
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 
 function App() {
   const [isDark, setIsDark] = useState(false)
@@ -25,20 +16,10 @@ function App() {
     <SidebarProvider>
       <AppSidebar isDark={isDark} onToggleTheme={() => setIsDark(prev => !prev)} />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-4" />
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbPage>Start</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-        </header>
-        <div className="flex flex-1 flex-col">
-          <StartPage />
-        </div>
+        <Routes>
+          <Route path="/" element={<StartPage />} />
+          <Route path="/habits/:id" element={<HabitDetailPage />} />
+        </Routes>
       </SidebarInset>
     </SidebarProvider>
   )
