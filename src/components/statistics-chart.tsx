@@ -73,34 +73,50 @@ export function StatisticsChart({
     const data = chartData[period]
 
     const average = Math.round(
-        data.reduce((total, day) => total + day.completed, 0) /
+        data.reduce((total, item) => total + item.completed, 0) /
         data.length
     )
 
+    const description =
+        period === "Allt"
+            ? "Månadsvis utveckling — sedan start"
+            : `Daglig utveckling — senaste ${period.toLowerCase()}`
+
+    const legend =
+        period === "Allt"
+            ? "Klarade vanor per månad"
+            : "Klarade vanor per dag"
+
     return (
-        <article className="rounded-xl border bg-card p-6 text-card-foreground shadow-sm">
+        <article className="rounded-xl border bg-card p-4 text-card-foreground shadow-sm sm:p-6">
             <div className="mb-8 flex items-start justify-between gap-4">
                 <div>
                     <h2 className="text-lg font-semibold">Utveckling</h2>
 
                     <p className="mt-1 text-sm text-muted-foreground">
-                        Daglig utveckling — {period.toLowerCase()}
+                        {description}
                     </p>
                 </div>
 
-                <div className="text-right">
+                <div className="shrink-0 text-right">
                     <p className="text-3xl font-bold">{average}%</p>
+
                     <p className="text-sm text-muted-foreground">
                         genomsnitt
                     </p>
                 </div>
             </div>
 
-            <div className="h-80 w-full">
+            <div className="h-72 w-full sm:h-80">
                 <ResponsiveContainer width="100%" height="100%">
                     <AreaChart
                         data={data}
-                        margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                        margin={{
+                            top: 10,
+                            right: 10,
+                            left: 0,
+                            bottom: 0,
+                        }}
                     >
                         <defs>
                             <linearGradient
@@ -115,6 +131,7 @@ export function StatisticsChart({
                                     stopColor="#8b5cf6"
                                     stopOpacity={0.4}
                                 />
+
                                 <stop
                                     offset="95%"
                                     stopColor="#8b5cf6"
@@ -175,7 +192,7 @@ export function StatisticsChart({
 
             <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
                 <span className="h-3 w-3 rounded-full bg-violet-500" />
-                Klarade vanor per dag
+                {legend}
             </div>
         </article>
     )

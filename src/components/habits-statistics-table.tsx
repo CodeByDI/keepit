@@ -126,7 +126,7 @@ export function HabitsStatisticsTable({
 
     return (
         <article className="overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm">
-            <div className="flex items-center justify-between gap-4 border-b px-6 py-5">
+            <div className="flex items-center justify-between gap-4 border-b px-4 py-5 sm:px-6">
                 <h2 className="text-lg font-semibold">Vanor</h2>
 
                 <button
@@ -136,7 +136,13 @@ export function HabitsStatisticsTable({
                     }
                     className="flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
-                    Sorterat efter genomsnitt
+                    <span className="hidden min-[430px]:inline">
+                        Sorterat efter genomsnitt
+                    </span>
+
+                    <span className="min-[430px]:hidden">
+                        Sortera
+                    </span>
 
                     <ArrowDownIcon
                         size={16}
@@ -146,88 +152,94 @@ export function HabitsStatisticsTable({
                 </button>
             </div>
 
-            <div className="overflow-x-auto">
-                <table className="w-full min-w-[650px] border-collapse">
-                    <thead>
-                        <tr className="border-b text-left text-xs uppercase tracking-wider text-muted-foreground">
-                            <th className="px-6 py-4 font-medium">Vana</th>
-                            <th className="px-6 py-4 font-medium">Streak</th>
-                            <th className="px-6 py-4 font-medium">
-                                {averageLabel}
-                            </th>
-                            <th className="px-6 py-4 text-right font-medium">
-                                Trend
-                            </th>
-                        </tr>
-                    </thead>
+            <table className="w-full border-collapse">
+                <thead>
+                    <tr className="border-b text-left text-xs uppercase tracking-wider text-muted-foreground">
+                        <th className="px-4 py-4 font-medium sm:px-6">
+                            Vana
+                        </th>
 
-                    <tbody>
-                        {sortedHabits.map((habit) => {
-                            const HabitIcon = habit.icon
-                            const average = habit.averages[period]
+                        <th className="px-3 py-4 font-medium sm:px-6">
+                            Streak
+                        </th>
 
-                            return (
-                                <tr
-                                    key={habit.name}
-                                    className={`border-b border-l-4 transition-colors last:border-b-0 hover:bg-muted/40 ${habit.accentClass}`}
-                                >
-                                    <td className="px-4 py-4">
-                                        <div className="flex items-center gap-3">
-                                            <span
-                                                className={`flex h-9 w-9 items-center justify-center rounded-lg ${habit.iconClass}`}
-                                            >
-                                                <HabitIcon size={20} />
-                                            </span>
+                        <th className="px-3 py-4 font-medium sm:px-6">
+                            {averageLabel}
+                        </th>
 
-                                            <span className="font-medium">
-                                                {habit.name}
-                                            </span>
-                                        </div>
-                                    </td>
+                        <th className="hidden px-6 py-4 text-right font-medium sm:table-cell">
+                            Trend
+                        </th>
+                    </tr>
+                </thead>
 
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-1">
-                                            <FireIcon
-                                                size={18}
-                                                weight="fill"
-                                                className="text-orange-500"
-                                            />
-                                            <span>{habit.streak}</span>
-                                        </div>
-                                    </td>
+                <tbody>
+                    {sortedHabits.map((habit) => {
+                        const HabitIcon = habit.icon
+                        const average = habit.averages[period]
 
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="h-2 w-24 overflow-hidden rounded-full bg-muted">
-                                                <div
-                                                    className={`h-full rounded-full ${habit.barClass}`}
-                                                    style={{ width: `${average}%` }}
-                                                />
-                                            </div>
+                        return (
+                            <tr
+                                key={habit.name}
+                                className={`border-b border-l-4 transition-colors last:border-b-0 hover:bg-muted/40 ${habit.accentClass}`}
+                            >
+                                <td className="px-4 py-4 sm:px-6">
+                                    <div className="flex items-center gap-2 sm:gap-3">
+                                        <span
+                                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${habit.iconClass}`}
+                                        >
+                                            <HabitIcon size={20} />
+                                        </span>
 
-                                            <span className="w-10 text-sm">
-                                                {average}%
-                                            </span>
-                                        </div>
-                                    </td>
+                                        <span className="font-medium">
+                                            {habit.name}
+                                        </span>
+                                    </div>
+                                </td>
 
-                                    <td className="px-6 py-4 text-right">
-                                        <ArrowRightIcon
+                                <td className="px-3 py-4 sm:px-6">
+                                    <div className="flex items-center gap-1">
+                                        <FireIcon
                                             size={18}
-                                            className={`ml-auto transition-transform ${habit.trend === "up"
-                                                    ? "-rotate-45 text-green-500"
-                                                    : habit.trend === "down"
-                                                        ? "rotate-45 text-red-500"
-                                                        : "text-muted-foreground"
-                                                }`}
+                                            weight="fill"
+                                            className="shrink-0 text-orange-500"
                                         />
-                                    </td>
-                                </tr>
-                            )
-                        })}
-                    </tbody>
-                </table>
-            </div>
+
+                                        <span>{habit.streak}</span>
+                                    </div>
+                                </td>
+
+                                <td className="px-3 py-4 sm:px-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="hidden h-2 w-16 overflow-hidden rounded-full bg-muted min-[430px]:block sm:w-24">
+                                            <div
+                                                className={`h-full rounded-full ${habit.barClass}`}
+                                                style={{ width: `${average}%` }}
+                                            />
+                                        </div>
+
+                                        <span className="text-sm">
+                                            {average}%
+                                        </span>
+                                    </div>
+                                </td>
+
+                                <td className="hidden px-6 py-4 text-right sm:table-cell">
+                                    <ArrowRightIcon
+                                        size={18}
+                                        className={`ml-auto transition-transform ${habit.trend === "up"
+                                            ? "-rotate-45 text-green-500"
+                                            : habit.trend === "down"
+                                                ? "rotate-45 text-red-500"
+                                                : "text-muted-foreground"
+                                            }`}
+                                    />
+                                </td>
+                            </tr>
+                        )
+                    })}
+                </tbody>
+            </table>
         </article>
     )
 }
