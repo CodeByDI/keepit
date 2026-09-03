@@ -9,13 +9,14 @@ import {
     FireIcon,
     PersonSimpleRunIcon,
 } from "@phosphor-icons/react"
+import type { StatisticsPeriod } from "@/components/statistics-chart"
 
 type HabitTrend = "up" | "down" | "stable"
 
 type Habit = {
     name: string
     streak: number
-    average: number
+    averages: Record<StatisticsPeriod, number>
     trend: HabitTrend
     icon: typeof PersonSimpleRunIcon
     accentClass: string
@@ -23,11 +24,19 @@ type Habit = {
     barClass: string
 }
 
+type HabitsStatisticsTableProps = {
+    period: StatisticsPeriod
+}
+
 const habits: Habit[] = [
     {
         name: "Morgonlöpning",
         streak: 12,
-        average: 68,
+        averages: {
+            "7 dagar": 72,
+            "28 dagar": 68,
+            Allt: 65,
+        },
         trend: "up",
         icon: PersonSimpleRunIcon,
         accentClass: "border-l-violet-500",
@@ -37,7 +46,11 @@ const habits: Habit[] = [
     {
         name: "Träna 30 min",
         streak: 8,
-        average: 64,
+        averages: {
+            "7 dagar": 66,
+            "28 dagar": 64,
+            Allt: 70,
+        },
         trend: "up",
         icon: BarbellIcon,
         accentClass: "border-l-purple-500",
@@ -47,7 +60,11 @@ const habits: Habit[] = [
     {
         name: "Drick 2L vatten",
         streak: 5,
-        average: 64,
+        averages: {
+            "7 dagar": 58,
+            "28 dagar": 64,
+            Allt: 61,
+        },
         trend: "stable",
         icon: DropIcon,
         accentClass: "border-l-indigo-400",
@@ -57,7 +74,11 @@ const habits: Habit[] = [
     {
         name: "Koda",
         streak: 1,
-        average: 54,
+        averages: {
+            "7 dagar": 48,
+            "28 dagar": 54,
+            Allt: 57,
+        },
         trend: "down",
         icon: CodeIcon,
         accentClass: "border-l-pink-400",
@@ -67,7 +88,11 @@ const habits: Habit[] = [
     {
         name: "Läs 20 sidor",
         streak: 3,
-        average: 50,
+        averages: {
+            "7 dagar": 55,
+            "28 dagar": 50,
+            Allt: 52,
+        },
         trend: "up",
         icon: BookOpenIcon,
         accentClass: "border-l-fuchsia-400",
@@ -76,16 +101,28 @@ const habits: Habit[] = [
     },
 ]
 
-export function HabitsStatisticsTable() {
+export function HabitsStatisticsTable({
+    period,
+}: HabitsStatisticsTableProps) {
     const [sortDescending, setSortDescending] = useState(true)
 
     const sortedHabits = useMemo(() => {
-        return [...habits].sort((firstHabit, secondHabit) =>
-            sortDescending
-                ? secondHabit.average - firstHabit.average
-                : firstHabit.average - secondHabit.average
-        )
-    }, [sortDescending])
+        return [...habits].sort((firstHabit, secondHabit) => {
+            const firstAverage = firstHabit.averages[period]
+            const secondAverage = secondHabit.averages[period]
+
+            return sortDescending
+                ? secondAverage - firstAverage
+                : firstAverage - secondAverage
+        })
+    }, [period, sortDescending])
+
+    const averageLabel =
+        period === "7 dagar"
+            ? "7-d snitt"
+            : period === "28 dagar"
+                ? "28-d snitt"
+                : "Totalt snitt"
 
     return (
         <article className="overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm">
@@ -116,7 +153,7 @@ export function HabitsStatisticsTable() {
                             <th className="px-6 py-4 font-medium">Vana</th>
                             <th className="px-6 py-4 font-medium">Streak</th>
                             <th className="px-6 py-4 font-medium">
-                                28-d snitt
+                                {averageLabel}
                             </th>
                             <th className="px-6 py-4 text-right font-medium">
                                 Trend
@@ -127,6 +164,7 @@ export function HabitsStatisticsTable() {
                     <tbody>
                         {sortedHabits.map((habit) => {
                             const HabitIcon = habit.icon
+                            const average = habit.averages[period]
 
                             return (
                                 <tr
@@ -154,7 +192,6 @@ export function HabitsStatisticsTable() {
                                                 weight="fill"
                                                 className="text-orange-500"
                                             />
-
                                             <span>{habit.streak}</span>
                                         </div>
                                     </td>
@@ -164,35 +201,26 @@ export function HabitsStatisticsTable() {
                                             <div className="h-2 w-24 overflow-hidden rounded-full bg-muted">
                                                 <div
                                                     className={`h-full rounded-full ${habit.barClass}`}
-                                                    style={{
-                                                        width: `${habit.average}%`,
-                                                    }}
+                                                    style={{ width: `${average}%` }}
                                                 />
                                             </div>
 
                                             <span className="w-10 text-sm">
-                                                {habit.average}%
+                                                {average}%
                                             </span>
                                         </div>
                                     </td>
 
                                     <td className="px-6 py-4 text-right">
-                                        <div className="flex justify-end">
-                                            <span
-                                                aria-label={`Trend för ${habit.name}: ${habit.trend}`}
-                                                className="rounded-md p-2"
-                                            >
-                                                <ArrowRightIcon
-                                                    size={18}
-                                                    className={`transition-transform ${habit.trend === "up"
-                                                            ? "-rotate-45 text-green-500"
-                                                            : habit.trend === "down"
-                                                                ? "rotate-45 text-red-500"
-                                                                : "text-muted-foreground"
-                                                        }`}
-                                                />
-                                            </span>
-                                        </div>
+                                        <ArrowRightIcon
+                                            size={18}
+                                            className={`ml-auto transition-transform ${habit.trend === "up"
+                                                    ? "-rotate-45 text-green-500"
+                                                    : habit.trend === "down"
+                                                        ? "rotate-45 text-red-500"
+                                                        : "text-muted-foreground"
+                                                }`}
+                                        />
                                     </td>
                                 </tr>
                             )

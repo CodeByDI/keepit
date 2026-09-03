@@ -1,12 +1,9 @@
 import { useState } from "react"
-
 import {
     StatisticsChart,
     type StatisticsPeriod,
 } from "@/components/statistics-chart"
-
 import { HabitsStatisticsTable } from "@/components/habits-statistics-table"
-
 
 const periods: StatisticsPeriod[] = [
     "7 dagar",
@@ -14,23 +11,59 @@ const periods: StatisticsPeriod[] = [
     "Allt",
 ]
 
-const summaryCards = [
-    {
-        title: "Klarat totalt",
-        value: "84",
-        description: "Registreringar sedan start",
-    },
-    {
-        title: "Aktiva vanor",
-        value: "5",
-        description: "Av 5 möjliga idag",
-    },
-    {
-        title: "Bästa vana",
-        value: "Morgonlöpning",
-        description: "68% klarat",
-    },
-]
+const summaryData = {
+    "7 dagar": [
+        {
+            title: "Klarat totalt",
+            value: "24",
+            description: "Registreringar senaste 7 dagarna",
+        },
+        {
+            title: "Aktiva vanor",
+            value: "5",
+            description: "Av 5 möjliga idag",
+        },
+        {
+            title: "Bästa vana",
+            value: "Morgonlöpning",
+            description: "72% klarat",
+        },
+    ],
+    "28 dagar": [
+        {
+            title: "Klarat totalt",
+            value: "84",
+            description: "Registreringar senaste 28 dagarna",
+        },
+        {
+            title: "Aktiva vanor",
+            value: "5",
+            description: "Av 5 möjliga idag",
+        },
+        {
+            title: "Bästa vana",
+            value: "Morgonlöpning",
+            description: "68% klarat",
+        },
+    ],
+    Allt: [
+        {
+            title: "Klarat totalt",
+            value: "246",
+            description: "Registreringar sedan start",
+        },
+        {
+            title: "Aktiva vanor",
+            value: "5",
+            description: "Av 5 skapade vanor",
+        },
+        {
+            title: "Bästa vana",
+            value: "Träna 30 min",
+            description: "70% klarat",
+        },
+    ],
+}
 
 export function StatisticsPage() {
     const [selectedPeriod, setSelectedPeriod] =
@@ -40,6 +73,8 @@ export function StatisticsPage() {
         selectedPeriod === "Allt"
             ? "Sedan start"
             : `Senaste ${selectedPeriod.toLowerCase()}`
+
+    const summaryCards = summaryData[selectedPeriod]
 
     return (
         <section className="mx-auto flex w-full max-w-7xl flex-col gap-7">
@@ -59,10 +94,11 @@ export function StatisticsPage() {
                         <button
                             key={period}
                             type="button"
+                            aria-pressed={selectedPeriod === period}
                             onClick={() => setSelectedPeriod(period)}
                             className={`rounded-lg px-5 py-2 text-sm transition-colors ${selectedPeriod === period
-                                ? "bg-background text-foreground shadow-sm"
-                                : "text-muted-foreground hover:text-foreground"
+                                    ? "bg-background text-foreground shadow-sm"
+                                    : "text-muted-foreground hover:text-foreground"
                                 }`}
                         >
                             {period}
@@ -83,8 +119,8 @@ export function StatisticsPage() {
 
                         <p
                             className={`mt-5 font-semibold ${card.title === "Bästa vana"
-                                ? "text-xl"
-                                : "text-4xl"
+                                    ? "text-xl"
+                                    : "text-4xl"
                                 }`}
                         >
                             {card.value}
@@ -99,7 +135,7 @@ export function StatisticsPage() {
 
             <StatisticsChart period={selectedPeriod} />
 
-            <HabitsStatisticsTable />
+            <HabitsStatisticsTable period={selectedPeriod} />
         </section>
     )
 }
