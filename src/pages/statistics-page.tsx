@@ -5,6 +5,8 @@ import {
     type StatisticsPeriod,
 } from "@/components/statistics-chart"
 
+import { HabitsStatisticsTable } from "@/components/habits-statistics-table"
+
 
 const periods: StatisticsPeriod[] = [
     "7 dagar",
@@ -96,6 +98,8 @@ export function StatisticsPage() {
             </div>
 
             <StatisticsChart period={selectedPeriod} />
+
+            <HabitsStatisticsTable />
         </section>
     )
 }
