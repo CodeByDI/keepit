@@ -12,6 +12,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
+import { StatisticsPage } from "@/pages/statistics-page"
 
 function App() {
   const [isDark, setIsDark] = useState(false)
@@ -35,8 +36,8 @@ function App() {
             </BreadcrumbList>
           </Breadcrumb>
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4">
-          <p className="text-muted-foreground">Content goes here</p>
+        <div className="flex flex-1 flex-col p-4 md:p-8">
+          <StatisticsPage />
         </div>
       </SidebarInset>
     </SidebarProvider>
