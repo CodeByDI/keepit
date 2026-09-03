@@ -84,7 +84,7 @@ export function StartPage() {
           <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--primary)" }}>Hej {user.name}</h1>
           <p className="text-sm text-muted-foreground opacity-60">Fredag 9 September</p>
         </div>
-        <Button onClick={() => setDialogOpen(true)} style={{ background: "linear-gradient(135deg, #5649d4 0%, #6d5cf6 45%, #8b5cf6 78%, #f472b6 100%)", color: "white", border: "none", height: "40px", fontWeight: 400 }}>
+        <Button onClick={() => setDialogOpen(true)} className="cursor-pointer hover:opacity-80 transition-opacity" style={{ background: "linear-gradient(135deg, #5649d4 0%, #6d5cf6 45%, #8b5cf6 78%, #f472b6 100%)", color: "white", border: "none", height: "40px", fontWeight: 400 }}>
           Skapa vana <PlusIcon size={16} />
         </Button>
       </div>

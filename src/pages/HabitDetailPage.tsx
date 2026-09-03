@@ -265,7 +265,7 @@ export function HabitDetailPage() {
               </p>
             </div>
             <Button
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
               style={{
                 background: "linear-gradient(135deg, #5649d4 0%, #6d5cf6 45%, #8b5cf6 78%, #f472b6 100%)",
                 color: "white",

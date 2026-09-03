@@ -114,11 +114,11 @@ export function NewHabitDialog({ open, onClose }: NewHabitDialogProps) {
 
           {/* Actions */}
           <div className="flex gap-3">
-            <Button variant="ghost" className="flex-1 text-muted-foreground opacity-60 hover:opacity-100" onClick={handleCancel}>
+            <Button variant="ghost" className="flex-1 text-muted-foreground opacity-60 hover:opacity-100 cursor-pointer" onClick={handleCancel}>
               Avbryt
             </Button>
             <Button
-              className="flex-1 h-11"
+              className="flex-1 h-11 cursor-pointer hover:opacity-80 transition-opacity"
               disabled={!title.trim()}
               onClick={handleSave}
               style={{
