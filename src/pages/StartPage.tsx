@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { NewHabitDialog } from "@/components/new-habit-dialog"
 import { PlusIcon, BookOpenIcon, CodeIcon, PersonSimpleRunIcon, BarbellIcon, DropIcon } from "@phosphor-icons/react"
 import { StreakCard } from "@/components/streak-card"
 import { WeeklyCard } from "@/components/weekly-card"
@@ -47,6 +48,7 @@ function getTodayLabel() {
 
 export function StartPage() {
   const [habits, setHabits] = useState(initialHabits)
+  const [dialogOpen, setDialogOpen] = useState(false)
 
   function toggleHabit(id: number) {
     setHabits((prev) =>
@@ -77,7 +79,7 @@ export function StartPage() {
           <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--primary)" }}>Hej {user.name}</h1>
           <p className="text-sm text-muted-foreground opacity-60">Fredag 9 September</p>
         </div>
-        <Button style={{ background: "linear-gradient(135deg, #5649d4 0%, #6d5cf6 45%, #8b5cf6 78%, #f472b6 100%)", color: "white", border: "none", height: "40px", fontWeight: 400 }}>
+        <Button onClick={() => setDialogOpen(true)} style={{ background: "linear-gradient(135deg, #5649d4 0%, #6d5cf6 45%, #8b5cf6 78%, #f472b6 100%)", color: "white", border: "none", height: "40px", fontWeight: 400 }}>
           Skapa vana <PlusIcon size={16} />
         </Button>
       </div>
@@ -91,6 +93,7 @@ export function StartPage() {
       {/* Habit list */}
       <HabitList habits={habits} onToggle={toggleHabit} />
 
+      <NewHabitDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />
     </div>
   )
 }
