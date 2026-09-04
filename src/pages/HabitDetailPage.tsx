@@ -157,7 +157,7 @@ export function HabitDetailPage() {
       <div className="flex flex-col gap-5 p-6 max-w-4xl mx-auto w-full">
 
         {/* Stat cards */}
-        <div className="grid grid-cols-3 gap-4" style={{ gridAutoRows: "130px" }}>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" style={{ gridAutoRows: "130px" }}>
           <Card className="h-full py-0">
             <CardContent style={{ padding: "16px 20px" }} className="flex flex-col justify-between h-full">
               <p className="text-xs font-normal uppercase tracking-widest text-muted-foreground opacity-60">Totalt genomfört</p>
@@ -204,7 +204,7 @@ export function HabitDetailPage() {
             <p className="text-xs font-normal uppercase tracking-widest text-muted-foreground opacity-60">Denna vecka</p>
             <p className="text-xs text-muted-foreground opacity-60">{doneThisWeek} av {totalDaysThisWeek} dagar</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             {WEEK.map((d, i) => (
               <WeekDot key={i} label={d.label} state={d.state} color={color} />
             ))}

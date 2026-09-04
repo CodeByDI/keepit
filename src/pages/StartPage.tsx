@@ -79,7 +79,7 @@ export function StartPage() {
     <div className="flex flex-col gap-6 p-6 max-w-4xl mx-auto w-full">
 
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--primary)" }}>Hej {user.name}</h1>
           <p className="text-sm text-muted-foreground opacity-60">Fredag 9 September</p>
@@ -90,7 +90,7 @@ export function StartPage() {
       </div>
 
       {/* Cards row — streak + weekly (coming next) */}
-      <div className="grid gap-4" style={{ gridTemplateColumns: "1fr 1fr", gridAutoRows: "150px" }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" style={{ gridAutoRows: "150px" }}>
         <StreakCard current={streakData.current} record={streakData.record} daysLeft={streakData.daysLeft} />
         <WeeklyCard days={weekDays} />
       </div>
