@@ -1,6 +1,8 @@
 import { useState } from "react"
 
 import {
+  ArrowLeft,
+  ArrowRight,
   Barbell,
   BookOpen,
   Check,
@@ -24,27 +26,11 @@ type CalendarDay = {
   isToday: boolean
 }
 
-type HabitId =
-  | "running"
-  | "training"
-  | "water"
-  | "reading"
-  | "coding"
-
-type Habit = {
-  id: HabitId
-  name: string
-  time: string
-  icon: typeof PersonSimpleRun
-  color: string
-  background: string
-}
-
 const TOTAL_HABITS = 5
 
 const weekdays = ["M", "T", "O", "T", "F", "L", "S"]
 
-const habits: Habit[] = [
+const habits = [
   {
     id: "running",
     name: "Morgonlöpning",
@@ -85,12 +71,47 @@ const habits: Habit[] = [
     color: "var(--chart-5)",
     background: "rgba(244, 114, 182, 0.12)",
   },
-]
+] as const
 
-function getMockCompleted(day: number) {
+type HabitId =
+  (typeof habits)[number]["id"]
+
+function sameDate(
+  first: Date,
+  second: Date
+) {
+  return (
+    first.getFullYear() ===
+      second.getFullYear() &&
+    first.getMonth() ===
+      second.getMonth() &&
+    first.getDate() ===
+      second.getDate()
+  )
+}
+
+function sameMonth(
+  first: Date,
+  second: Date
+) {
+  return (
+    first.getFullYear() ===
+      second.getFullYear() &&
+    first.getMonth() ===
+      second.getMonth()
+  )
+}
+
+function getMockCompleted(
+  day: number,
+  month: number
+) {
   const pattern = [5, 5, 4, 5, 3, 5, 4]
 
-  return pattern[(day - 1) % pattern.length]
+  return pattern[
+    (day + month - 1) %
+      pattern.length
+  ]
 }
 
 function getMockStreak(
@@ -111,7 +132,10 @@ function isHabitCompleted(
   day: CalendarDay,
   habitIndex: number
 ) {
-  if (day.future || !day.currentMonth) {
+  if (
+    day.future ||
+    !day.currentMonth
+  ) {
     return false
   }
 
@@ -119,25 +143,28 @@ function isHabitCompleted(
 }
 
 function createCalendarDays(
+  visibleMonth: Date,
   today: Date
 ): CalendarDay[] {
-  const year = today.getFullYear()
-  const month = today.getMonth()
+  const year =
+    visibleMonth.getFullYear()
+
+  const month =
+    visibleMonth.getMonth()
 
   const normalizedToday = new Date(
-    year,
-    month,
+    today.getFullYear(),
+    today.getMonth(),
     today.getDate()
   )
 
-  const firstDayOfMonth = new Date(
-    year,
-    month,
-    1
-  )
+  const firstDayOfMonth =
+    new Date(year, month, 1)
 
+  // Gör måndag till första veckodag.
   const mondayOffset =
-    (firstDayOfMonth.getDay() + 6) % 7
+    (firstDayOfMonth.getDay() + 6) %
+    7
 
   const gridStart = new Date(
     year,
@@ -145,9 +172,15 @@ function createCalendarDays(
     1 - mondayOffset
   )
 
-  const calendarDays: CalendarDay[] = []
+  const calendarDays: CalendarDay[] =
+    []
 
-  for (let index = 0; index < 42; index++) {
+  // 6 veckor × 7 dagar
+  for (
+    let index = 0;
+    index < 42;
+    index++
+  ) {
     const date = new Date(
       gridStart.getFullYear(),
       gridStart.getMonth(),
@@ -159,12 +192,7 @@ function createCalendarDays(
       date.getMonth() === month
 
     const isToday =
-      date.getFullYear() ===
-        normalizedToday.getFullYear() &&
-      date.getMonth() ===
-        normalizedToday.getMonth() &&
-      date.getDate() ===
-        normalizedToday.getDate()
+      sameDate(date, normalizedToday)
 
     const future =
       date.getTime() >
@@ -172,7 +200,10 @@ function createCalendarDays(
 
     const completed =
       currentMonth && !future
-        ? getMockCompleted(date.getDate())
+        ? getMockCompleted(
+            date.getDate(),
+            date.getMonth()
+          )
         : 0
 
     const streak =
@@ -222,7 +253,9 @@ function ProgressRing({
     "var(--chart-5)",
   ]
 
-  if (selectedHabitIndex !== null) {
+  if (
+    selectedHabitIndex !== null
+  ) {
     const habitCompleted =
       selectedHabitIndex < completed
 
@@ -230,9 +263,12 @@ function ProgressRing({
       <div
         className="h-7 w-7 rounded-full p-[3px]"
         style={{
-          background: habitCompleted
-            ? colors[selectedHabitIndex]
-            : "var(--muted)",
+          background:
+            habitCompleted
+              ? colors[
+                  selectedHabitIndex
+                ]
+              : "var(--muted)",
         }}
       >
         <div className="h-full w-full rounded-full bg-card" />
@@ -269,51 +305,136 @@ function ProgressRing({
 export default function Calendar() {
   const today = new Date()
 
+  const normalizedToday =
+    new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    )
+
+  const currentMonth =
+    new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      1
+    )
+
+  const [visibleMonth, setVisibleMonth] =
+    useState<Date>(currentMonth)
+
+  const [selectedDate, setSelectedDate] =
+    useState<Date>(normalizedToday)
+
+  const [
+    selectedHabitId,
+    setSelectedHabitId,
+  ] =
+    useState<
+      "all" | HabitId
+    >("all")
+
   const calendarDays =
-    createCalendarDays(today)
-
-  const currentMonthLabel =
-    capitalizeFirstLetter(
-      new Intl.DateTimeFormat("sv-SE", {
-        month: "long",
-        year: "numeric",
-      }).format(today)
+    createCalendarDays(
+      visibleMonth,
+      today
     )
 
-  const initialSelectedDay =
+  const selectedDay =
+    calendarDays.find((date) =>
+      sameDate(
+        date.date,
+        selectedDate
+      )
+    ) ??
     calendarDays.find(
-      (date) => date.isToday
-    ) as CalendarDay
-
-  const [selectedDay, setSelectedDay] =
-    useState<CalendarDay>(
-      initialSelectedDay
-    )
-
-  const [selectedHabitId, setSelectedHabitId] =
-    useState<"all" | HabitId>("all")
+      (date) => date.currentMonth
+    )!
 
   const selectedHabitIndex =
     selectedHabitId === "all"
       ? null
       : habits.findIndex(
           (habit) =>
-            habit.id === selectedHabitId
+            habit.id ===
+            selectedHabitId
         )
 
   const selectedHabit =
     selectedHabitIndex === null
       ? null
-      : habits[selectedHabitIndex]
+      : habits[
+          selectedHabitIndex
+        ]
+
+  const visibleMonthLabel =
+    capitalizeFirstLetter(
+      new Intl.DateTimeFormat(
+        "sv-SE",
+        {
+          month: "long",
+          year: "numeric",
+        }
+      ).format(visibleMonth)
+    )
 
   const selectedDateLabel =
     capitalizeFirstLetter(
-      new Intl.DateTimeFormat("sv-SE", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-      }).format(selectedDay.date)
+      new Intl.DateTimeFormat(
+        "sv-SE",
+        {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+        }
+      ).format(selectedDay.date)
     )
+
+  const canGoNext =
+    !sameMonth(
+      visibleMonth,
+      currentMonth
+    )
+
+  function changeMonth(
+    direction: number
+  ) {
+    const nextMonth = new Date(
+      visibleMonth.getFullYear(),
+      visibleMonth.getMonth() +
+        direction,
+      1
+    )
+
+    // Tillåt inte månader efter
+    // aktuell månad.
+    if (
+      nextMonth.getTime() >
+      currentMonth.getTime()
+    ) {
+      return
+    }
+
+    setVisibleMonth(nextMonth)
+
+    if (
+      sameMonth(
+        nextMonth,
+        currentMonth
+      )
+    ) {
+      setSelectedDate(
+        normalizedToday
+      )
+    } else {
+      setSelectedDate(
+        new Date(
+          nextMonth.getFullYear(),
+          nextMonth.getMonth(),
+          1
+        )
+      )
+    }
+  }
 
   const elapsedDays =
     calendarDays.filter(
@@ -325,11 +446,14 @@ export default function Calendar() {
   let monthPercentage = 0
   let monthResultText = ""
 
-  if (selectedHabitIndex === null) {
+  if (
+    selectedHabitIndex === null
+  ) {
     const fullyCompletedDays =
       elapsedDays.filter(
         (date) =>
-          date.completed === date.total
+          date.completed ===
+          date.total
       ).length
 
     const totalCompletedHabits =
@@ -340,7 +464,8 @@ export default function Calendar() {
       )
 
     const totalPossibleHabits =
-      elapsedDays.length * TOTAL_HABITS
+      elapsedDays.length *
+      TOTAL_HABITS
 
     monthPercentage =
       totalPossibleHabits > 0
@@ -355,11 +480,12 @@ export default function Calendar() {
       `${fullyCompletedDays} av ${elapsedDays.length} dagar fullständiga`
   } else {
     const completedHabitDays =
-      elapsedDays.filter((date) =>
-        isHabitCompleted(
-          date,
-          selectedHabitIndex
-        )
+      elapsedDays.filter(
+        (date) =>
+          isHabitCompleted(
+            date,
+            selectedHabitIndex
+          )
       ).length
 
     monthPercentage =
@@ -414,43 +540,96 @@ export default function Calendar() {
             </h1>
 
             <p className="mt-1 text-xs text-muted-foreground">
-              {currentMonthLabel}
+              {visibleMonthLabel}
             </p>
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label
-              htmlFor="habit-filter"
-              className="text-[9px] font-semibold uppercase tracking-[0.08em] text-muted-foreground"
-            >
-              Visa vana
-            </label>
+          <div className="flex items-end gap-3">
+            {/* MÅNADSNAVIGATION */}
 
-            <select
-              id="habit-filter"
-              value={selectedHabitId}
-              onChange={(event) =>
-                setSelectedHabitId(
-                  event.target.value as
-                    | "all"
-                    | HabitId
-                )
-              }
-              className="h-8 min-w-[170px] rounded-md border bg-background px-2 text-xs text-foreground outline-none transition focus:border-primary"
-            >
-              <option value="all">
-                Alla vanor
-              </option>
+            <div className="flex gap-1">
+              <button
+                type="button"
+                onClick={() =>
+                  changeMonth(-1)
+                }
+                className="flex h-8 w-8 items-center justify-center rounded-md border text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                aria-label="Föregående månad"
+                title="Föregående månad"
+              >
+                <ArrowLeft
+                  size={14}
+                />
+              </button>
 
-              {habits.map((habit) => (
-                <option
-                  key={habit.id}
-                  value={habit.id}
-                >
-                  {habit.name}
+              <button
+                type="button"
+                onClick={() =>
+                  changeMonth(1)
+                }
+                disabled={!canGoNext}
+                className={[
+                  "flex h-8 w-8 items-center justify-center rounded-md border transition",
+                  canGoNext
+                    ? "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    : "cursor-not-allowed opacity-30",
+                ].join(" ")}
+                aria-label="Nästa månad"
+                title="Nästa månad"
+              >
+                <ArrowRight
+                  size={14}
+                />
+              </button>
+            </div>
+
+            {/* VANEFILTER */}
+
+            <div className="flex flex-col gap-1">
+              <label
+                htmlFor="habit-filter"
+                className="text-[9px] font-semibold uppercase tracking-[0.08em] text-muted-foreground"
+              >
+                Visa vana
+              </label>
+
+              <select
+                id="habit-filter"
+                value={
+                  selectedHabitId
+                }
+                onChange={(event) =>
+                  setSelectedHabitId(
+                    event.target
+                      .value as
+                      | "all"
+                      | HabitId
+                  )
+                }
+                className="h-8 min-w-[170px] rounded-md border bg-background px-2 text-xs text-foreground outline-none transition focus:border-primary"
+              >
+                <option value="all">
+                  Alla vanor
                 </option>
-              ))}
-            </select>
+
+                {habits.map(
+                  (habit) => (
+                    <option
+                      key={
+                        habit.id
+                      }
+                      value={
+                        habit.id
+                      }
+                    >
+                      {
+                        habit.name
+                      }
+                    </option>
+                  )
+                )}
+              </select>
+            </div>
           </div>
         </div>
       </header>
@@ -493,22 +672,24 @@ export default function Calendar() {
             </p>
 
             <div className="space-y-[3px]">
-              {visibleHabits.map((habit) => (
-                <div
-                  key={habit.id}
-                  className="flex items-center gap-[7px] text-[10px] text-muted-foreground"
-                >
-                  <span
-                    className="h-[7px] w-[7px] rounded-full"
-                    style={{
-                      background:
-                        habit.color,
-                    }}
-                  />
+              {visibleHabits.map(
+                (habit) => (
+                  <div
+                    key={habit.id}
+                    className="flex items-center gap-[7px] text-[10px] text-muted-foreground"
+                  >
+                    <span
+                      className="h-[7px] w-[7px] rounded-full"
+                      style={{
+                        background:
+                          habit.color,
+                      }}
+                    />
 
-                  {habit.name}
-                </div>
-              ))}
+                    {habit.name}
+                  </div>
+                )
+              )}
             </div>
           </div>
         </div>
@@ -519,7 +700,10 @@ export default function Calendar() {
       <section className="overflow-hidden rounded-[10px] border bg-card">
         <div className="grid grid-cols-7 border-b">
           {weekdays.map(
-            (weekday, index) => (
+            (
+              weekday,
+              index
+            ) => (
               <div
                 key={`${weekday}-${index}`}
                 className="py-[10px] text-center text-[10px] font-medium tracking-[0.05em] text-muted-foreground"
@@ -531,69 +715,75 @@ export default function Calendar() {
         </div>
 
         <div className="grid grid-cols-7">
-          {calendarDays.map((date) => {
-            const isSelected =
-              selectedDay.date.getFullYear() ===
-                date.date.getFullYear() &&
-              selectedDay.date.getMonth() ===
-                date.date.getMonth() &&
-              selectedDay.date.getDate() ===
-                date.date.getDate()
+          {calendarDays.map(
+            (date) => {
+              const isSelected =
+                sameDate(
+                  selectedDay.date,
+                  date.date
+                )
 
-            return (
-              <button
-                key={date.date.getTime()}
-                type="button"
-                disabled={!date.currentMonth}
-                onClick={() =>
-                  setSelectedDay(date)
-                }
-                className={[
-                  "flex min-h-[72px] flex-col items-center justify-center gap-[6px]",
-                  "border-b border-r px-2 py-3 text-[10px] transition",
-
-                  date.currentMonth
-                    ? "cursor-pointer hover:bg-muted/40"
-                    : "cursor-default opacity-25",
-
-                  date.isToday
-                    ? "bg-primary/[0.06]"
-                    : "",
-
-                  isSelected
-                    ? "ring-1 ring-inset ring-primary/40"
-                    : "",
-                ].join(" ")}
-              >
-                <span
-                  className={
-                    date.isToday
-                      ? "font-semibold text-primary"
-                      : "text-foreground"
+              return (
+                <button
+                  key={
+                    date.date.getTime()
                   }
-                >
-                  {date.day}
-                </span>
-
-                <div
-                  className={
-                    date.isToday
-                      ? "rounded-full ring-1 ring-primary/70 ring-offset-2 ring-offset-card"
-                      : ""
+                  type="button"
+                  disabled={
+                    !date.currentMonth
                   }
+                  onClick={() =>
+                    setSelectedDate(
+                      date.date
+                    )
+                  }
+                  className={[
+                    "flex min-h-[72px] flex-col items-center justify-center gap-[6px]",
+                    "border-b border-r px-2 py-3 text-[10px] transition",
+
+                    date.currentMonth
+                      ? "cursor-pointer hover:bg-muted/40"
+                      : "cursor-default opacity-25",
+
+                    date.isToday
+                      ? "bg-primary/[0.06]"
+                      : "",
+
+                    isSelected
+                      ? "ring-1 ring-inset ring-primary/40"
+                      : "",
+                  ].join(" ")}
                 >
-                  <ProgressRing
-                    completed={
-                      date.completed
+                  <span
+                    className={
+                      date.isToday
+                        ? "font-semibold text-primary"
+                        : "text-foreground"
                     }
-                    selectedHabitIndex={
-                      selectedHabitIndex
+                  >
+                    {date.day}
+                  </span>
+
+                  <div
+                    className={
+                      date.isToday
+                        ? "rounded-full ring-1 ring-primary/70 ring-offset-2 ring-offset-card"
+                        : ""
                     }
-                  />
-                </div>
-              </button>
-            )
-          })}
+                  >
+                    <ProgressRing
+                      completed={
+                        date.completed
+                      }
+                      selectedHabitIndex={
+                        selectedHabitIndex
+                      }
+                    />
+                  </div>
+                </button>
+              )
+            }
+          )}
         </div>
       </section>
 
@@ -612,7 +802,10 @@ export default function Calendar() {
           >
             <div className="flex h-full w-full items-center justify-center rounded-full bg-card">
               <span className="text-sm font-bold">
-                {completionPercentage}%
+                {
+                  completionPercentage
+                }
+                %
               </span>
             </div>
           </div>
@@ -629,11 +822,16 @@ export default function Calendar() {
                   className="text-primary"
                 />
 
-                {selectedDayCompleted} klara
+                {
+                  selectedDayCompleted
+                }{" "}
+                klara
               </span>
 
               <span className="flex items-center gap-1 rounded-full border bg-muted px-2 py-1 text-[9px]">
-                <Circle size={10} />
+                <Circle
+                  size={10}
+                />
 
                 {selectedDayTotal -
                   selectedDayCompleted}{" "}
@@ -647,13 +845,21 @@ export default function Calendar() {
                   className="text-orange-500"
                 />
 
-                Streak {selectedDay.streak}
+                Streak{" "}
+                {
+                  selectedDay.streak
+                }
               </span>
 
               <span className="flex items-center gap-1 rounded-full border bg-muted px-2 py-1 text-[9px]">
-                <ListChecks size={10} />
+                <ListChecks
+                  size={10}
+                />
 
-                {selectedDayTotal} planerade
+                {
+                  selectedDayTotal
+                }{" "}
+                planerade
               </span>
             </div>
           </div>
@@ -667,81 +873,96 @@ export default function Calendar() {
           </p>
         </div>
 
-        {visibleHabits.map((habit) => {
-          const Icon = habit.icon
+        {visibleHabits.map(
+          (habit) => {
+            const Icon =
+              habit.icon
 
-          const habitIndex =
-            habits.findIndex(
-              (item) =>
-                item.id === habit.id
-            )
+            const habitIndex =
+              habits.findIndex(
+                (item) =>
+                  item.id ===
+                  habit.id
+              )
 
-          const completed =
-            isHabitCompleted(
-              selectedDay,
-              habitIndex
-            )
+            const completed =
+              isHabitCompleted(
+                selectedDay,
+                habitIndex
+              )
 
-          return (
-            <div
-              key={habit.id}
-              className="flex items-center gap-3 border-t px-5 py-3"
-              style={{
-                borderLeft: `3px solid ${habit.color}`,
-              }}
-            >
+            return (
               <div
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border"
+                key={habit.id}
+                className="flex items-center gap-3 border-t px-5 py-3"
                 style={{
-                  color: habit.color,
-                  background:
-                    habit.background,
-                  borderColor:
-                    habit.color,
+                  borderLeft: `3px solid ${habit.color}`,
                 }}
               >
-                <Icon size={14} />
-              </div>
-
-              <div className="min-w-0 flex-1">
-                <p
-                  className={[
-                    "text-xs font-medium",
-                    completed
-                      ? "text-muted-foreground"
-                      : "",
-                  ].join(" ")}
+                <div
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border"
+                  style={{
+                    color:
+                      habit.color,
+                    background:
+                      habit.background,
+                    borderColor:
+                      habit.color,
+                  }}
                 >
-                  {habit.name}
-                </p>
-
-                <p className="mt-[1px] text-[9px] text-muted-foreground">
-                  {habit.time}
-                </p>
-              </div>
-
-              {selectedDay.future ? (
-                <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
-                  <Circle size={10} />
-                  Planerad
-                </div>
-              ) : completed ? (
-                <div className="flex items-center gap-1 text-[9px] font-medium text-primary">
-                  <Check
-                    size={11}
-                    weight="bold"
+                  <Icon
+                    size={14}
                   />
-                  Klar
                 </div>
-              ) : (
-                <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
-                  <Circle size={10} />
-                  Inte klar
+
+                <div className="min-w-0 flex-1">
+                  <p
+                    className={[
+                      "text-xs font-medium",
+                      completed
+                        ? "text-muted-foreground"
+                        : "",
+                    ].join(" ")}
+                  >
+                    {
+                      habit.name
+                    }
+                  </p>
+
+                  <p className="mt-[1px] text-[9px] text-muted-foreground">
+                    {
+                      habit.time
+                    }
+                  </p>
                 </div>
-              )}
-            </div>
-          )
-        })}
+
+                {selectedDay.future ? (
+                  <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
+                    <Circle
+                      size={10}
+                    />
+                    Planerad
+                  </div>
+                ) : completed ? (
+                  <div className="flex items-center gap-1 text-[9px] font-medium text-primary">
+                    <Check
+                      size={11}
+                      weight="bold"
+                    />
+                    Klar
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
+                    <Circle
+                      size={10}
+                    />
+                    Inte klar
+                  </div>
+                )}
+              </div>
+            )
+          }
+        )}
       </section>
     </div>
   )
