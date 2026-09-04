@@ -72,7 +72,10 @@ function getMockCompleted(day: number) {
   return pattern[(day - 1) % pattern.length]
 }
 
-function getMockStreak(day: number, completed: number) {
+function getMockStreak(
+  day: number,
+  completed: number
+) {
   if (completed === TOTAL_HABITS) {
     return Math.min(day, 21)
   }
@@ -83,7 +86,9 @@ function getMockStreak(day: number, completed: number) {
   )
 }
 
-function createCalendarDays(today: Date): CalendarDay[] {
+function createCalendarDays(
+  today: Date
+): CalendarDay[] {
   const year = today.getFullYear()
   const month = today.getMonth()
 
@@ -99,8 +104,8 @@ function createCalendarDays(today: Date): CalendarDay[] {
     1
   )
 
-  // JavaScript: söndag = 0.
-  // Vi ändrar så att måndag blir första dagen.
+  // JavaScript använder söndag = 0.
+  // Detta gör måndag till första dagen i veckan.
   const mondayOffset =
     (firstDayOfMonth.getDay() + 6) % 7
 
@@ -121,8 +126,8 @@ function createCalendarDays(today: Date): CalendarDay[] {
     )
 
     const currentMonth =
-      date.getMonth() === month &&
-      date.getFullYear() === year
+      date.getFullYear() === year &&
+      date.getMonth() === month
 
     const isToday =
       date.getFullYear() ===
@@ -136,9 +141,19 @@ function createCalendarDays(today: Date): CalendarDay[] {
       date.getTime() >
       normalizedToday.getTime()
 
+    // Framtida dagar är klickbara,
+    // men har ännu inga genomförda vanor.
     const completed =
       currentMonth && !future
         ? getMockCompleted(date.getDate())
+        : 0
+
+    const streak =
+      currentMonth && !future
+        ? getMockStreak(
+            date.getDate(),
+            completed
+          )
         : 0
 
     calendarDays.push({
@@ -147,13 +162,7 @@ function createCalendarDays(today: Date): CalendarDay[] {
       currentMonth,
       completed,
       total: TOTAL_HABITS,
-      streak:
-        currentMonth && !future
-          ? getMockStreak(
-              date.getDate(),
-              completed
-            )
-          : 0,
+      streak,
       future,
       isToday,
     })
@@ -162,7 +171,9 @@ function createCalendarDays(today: Date): CalendarDay[] {
   return calendarDays
 }
 
-function capitalizeFirstLetter(value: string) {
+function capitalizeFirstLetter(
+  value: string
+) {
   return (
     value.charAt(0).toUpperCase() +
     value.slice(1)
@@ -239,6 +250,7 @@ export default function Calendar() {
       initialSelectedDay
     )
 
+  // Månadsresultatet räknar bara fram till dagens datum.
   const completedDaysThisMonth =
     calendarDays.filter(
       (date) =>
@@ -382,23 +394,22 @@ export default function Calendar() {
               <button
                 key={date.date.getTime()}
                 type="button"
-                disabled={
-                  !date.currentMonth ||
-                  date.future
-                }
+                disabled={!date.currentMonth}
                 onClick={() =>
                   setSelectedDay(date)
                 }
                 className={[
                   "flex min-h-[72px] flex-col items-center justify-center gap-[6px]",
                   "border-b border-r px-2 py-3 text-[10px] transition",
-                  !date.currentMonth ||
-                  date.future
-                    ? "cursor-default opacity-25"
-                    : "cursor-pointer hover:bg-muted/40",
+
+                  date.currentMonth
+                    ? "cursor-pointer hover:bg-muted/40"
+                    : "cursor-default opacity-25",
+
                   date.isToday
                     ? "bg-primary/[0.06]"
                     : "",
+
                   isSelected
                     ? "ring-1 ring-inset ring-primary/40"
                     : "",
