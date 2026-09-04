@@ -104,8 +104,6 @@ function createCalendarDays(
     1
   )
 
-  // JavaScript använder söndag = 0.
-  // Detta gör måndag till första dagen i veckan.
   const mondayOffset =
     (firstDayOfMonth.getDay() + 6) % 7
 
@@ -117,7 +115,6 @@ function createCalendarDays(
 
   const calendarDays: CalendarDay[] = []
 
-  // 6 veckor x 7 dagar = 42 kalenderceller
   for (let index = 0; index < 42; index++) {
     const date = new Date(
       gridStart.getFullYear(),
@@ -141,8 +138,6 @@ function createCalendarDays(
       date.getTime() >
       normalizedToday.getTime()
 
-    // Framtida dagar är klickbara,
-    // men har ännu inga genomförda vanor.
     const completed =
       currentMonth && !future
         ? getMockCompleted(date.getDate())
@@ -250,7 +245,6 @@ export default function Calendar() {
       initialSelectedDay
     )
 
-  // Månadsresultatet räknar bara fram till dagens datum.
   const completedDaysThisMonth =
     calendarDays.filter(
       (date) =>
@@ -559,19 +553,22 @@ export default function Calendar() {
                 </p>
               </div>
 
-              {completed ? (
+              {selectedDay.future ? (
+                <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
+                  <Circle size={10} />
+                  Planerad
+                </div>
+              ) : completed ? (
                 <div className="flex items-center gap-1 text-[9px] font-medium text-primary">
                   <Check
                     size={11}
                     weight="bold"
                   />
-
                   Klar
                 </div>
               ) : (
                 <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
                   <Circle size={10} />
-
                   Inte klar
                 </div>
               )}
