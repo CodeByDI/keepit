@@ -21,7 +21,6 @@ type CalendarDay = {
   currentMonth: boolean
   completed: number
   total: number
-  streak: number
   future: boolean
   isToday: boolean
 }
@@ -102,11 +101,27 @@ function sameMonth(
   )
 }
 
+function normalizeDate(date: Date) {
+  return new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate()
+  )
+}
+
+/*
+  Tillfällig exempeldata.
+
+  Funktionen bestämmer hur många av
+  dagens fem vanor som är genomförda.
+*/
 function getMockCompleted(
-  day: number,
-  month: number
+  date: Date
 ) {
   const pattern = [5, 5, 4, 5, 3, 5, 4]
+
+  const day = date.getDate()
+  const month = date.getMonth()
 
   return pattern[
     (day + month - 1) %
@@ -114,32 +129,107 @@ function getMockCompleted(
   ]
 }
 
-function getMockStreak(
-  day: number,
-  completed: number
+/*
+  Kontrollerar om en viss vana
+  genomfördes på ett visst datum.
+*/
+function isHabitCompletedOnDate(
+  date: Date,
+  habitIndex: number
 ) {
-  if (completed === TOTAL_HABITS) {
-    return Math.min(day, 21)
+  const completed =
+    getMockCompleted(date)
+
+  return habitIndex < completed
+}
+
+/*
+  Kontrollerar om dagen räknas som
+  genomförd för streak.
+
+  Om "Alla vanor" är valt måste alla
+  fem vanor vara klara.
+
+  Om en specifik vana är vald behöver
+  bara den vanan vara genomförd.
+*/
+function isDayCompletedForStreak(
+  date: Date,
+  selectedHabitIndex: number | null
+) {
+  const completed =
+    getMockCompleted(date)
+
+  if (selectedHabitIndex === null) {
+    return completed === TOTAL_HABITS
   }
 
-  return Math.max(
-    0,
-    Math.min(day - 1, 12)
+  return (
+    selectedHabitIndex < completed
   )
 }
 
-function isHabitCompleted(
-  day: CalendarDay,
-  habitIndex: number
+/*
+  Räknar streak bakåt från vald dag.
+
+  Exempel:
+  fredag = klar
+  torsdag = klar
+  onsdag = missad
+
+  streak = 2
+
+  Om vald dag är missad blir streak = 0.
+*/
+function calculateStreak(
+  selectedDate: Date,
+  selectedHabitIndex: number | null,
+  today: Date
 ) {
+  const normalizedSelectedDate =
+    normalizeDate(selectedDate)
+
+  const normalizedToday =
+    normalizeDate(today)
+
   if (
-    day.future ||
-    !day.currentMonth
+    normalizedSelectedDate.getTime() >
+    normalizedToday.getTime()
   ) {
-    return false
+    return 0
   }
 
-  return habitIndex < day.completed
+  let streak = 0
+
+  const dateToCheck =
+    new Date(normalizedSelectedDate)
+
+  /*
+    Säkerhetsgräns på 365 dagar.
+  */
+  for (
+    let index = 0;
+    index < 365;
+    index++
+  ) {
+    const completed =
+      isDayCompletedForStreak(
+        dateToCheck,
+        selectedHabitIndex
+      )
+
+    if (!completed) {
+      break
+    }
+
+    streak++
+
+    dateToCheck.setDate(
+      dateToCheck.getDate() - 1
+    )
+  }
+
+  return streak
 }
 
 function createCalendarDays(
@@ -152,16 +242,18 @@ function createCalendarDays(
   const month =
     visibleMonth.getMonth()
 
-  const normalizedToday = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate()
-  )
+  const normalizedToday =
+    normalizeDate(today)
 
   const firstDayOfMonth =
     new Date(year, month, 1)
 
-  // Gör måndag till första veckodag.
+  /*
+    JavaScript:
+    söndag = 0
+
+    Vi gör måndag till första dagen.
+  */
   const mondayOffset =
     (firstDayOfMonth.getDay() + 6) %
     7
@@ -175,7 +267,9 @@ function createCalendarDays(
   const calendarDays: CalendarDay[] =
     []
 
-  // 6 veckor × 7 dagar
+  /*
+    6 veckor × 7 dagar = 42 celler
+  */
   for (
     let index = 0;
     index < 42;
@@ -192,7 +286,10 @@ function createCalendarDays(
       date.getMonth() === month
 
     const isToday =
-      sameDate(date, normalizedToday)
+      sameDate(
+        date,
+        normalizedToday
+      )
 
     const future =
       date.getTime() >
@@ -200,18 +297,7 @@ function createCalendarDays(
 
     const completed =
       currentMonth && !future
-        ? getMockCompleted(
-            date.getDate(),
-            date.getMonth()
-          )
-        : 0
-
-    const streak =
-      currentMonth && !future
-        ? getMockStreak(
-            date.getDate(),
-            completed
-          )
+        ? getMockCompleted(date)
         : 0
 
     calendarDays.push({
@@ -220,7 +306,6 @@ function createCalendarDays(
       currentMonth,
       completed,
       total: TOTAL_HABITS,
-      streak,
       future,
       isToday,
     })
@@ -306,11 +391,7 @@ export default function Calendar() {
   const today = new Date()
 
   const normalizedToday =
-    new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate()
-    )
+    normalizeDate(today)
 
   const currentMonth =
     new Date(
@@ -319,11 +400,21 @@ export default function Calendar() {
       1
     )
 
-  const [visibleMonth, setVisibleMonth] =
-    useState<Date>(currentMonth)
+  const [
+    visibleMonth,
+    setVisibleMonth,
+  ] =
+    useState<Date>(
+      currentMonth
+    )
 
-  const [selectedDate, setSelectedDate] =
-    useState<Date>(normalizedToday)
+  const [
+    selectedDate,
+    setSelectedDate,
+  ] =
+    useState<Date>(
+      normalizedToday
+    )
 
   const [
     selectedHabitId,
@@ -398,15 +489,18 @@ export default function Calendar() {
   function changeMonth(
     direction: number
   ) {
-    const nextMonth = new Date(
-      visibleMonth.getFullYear(),
-      visibleMonth.getMonth() +
-        direction,
-      1
-    )
+    const nextMonth =
+      new Date(
+        visibleMonth.getFullYear(),
+        visibleMonth.getMonth() +
+          direction,
+        1
+      )
 
-    // Tillåt inte månader efter
-    // aktuell månad.
+    /*
+      Tillåt inte navigation längre
+      fram än aktuell månad.
+    */
     if (
       nextMonth.getTime() >
       currentMonth.getTime()
@@ -459,7 +553,8 @@ export default function Calendar() {
     const totalCompletedHabits =
       elapsedDays.reduce(
         (sum, date) =>
-          sum + date.completed,
+          sum +
+          date.completed,
         0
       )
 
@@ -482,8 +577,8 @@ export default function Calendar() {
     const completedHabitDays =
       elapsedDays.filter(
         (date) =>
-          isHabitCompleted(
-            date,
+          isHabitCompletedOnDate(
+            date.date,
             selectedHabitIndex
           )
       ).length
@@ -504,12 +599,14 @@ export default function Calendar() {
   const selectedDayCompleted =
     selectedHabitIndex === null
       ? selectedDay.completed
-      : isHabitCompleted(
-            selectedDay,
-            selectedHabitIndex
-          )
-        ? 1
-        : 0
+      : selectedDay.future
+        ? 0
+        : isHabitCompletedOnDate(
+              selectedDay.date,
+              selectedHabitIndex
+            )
+          ? 1
+          : 0
 
   const selectedDayTotal =
     selectedHabitIndex === null
@@ -521,6 +618,16 @@ export default function Calendar() {
       (selectedDayCompleted /
         selectedDayTotal) *
         100
+    )
+
+  /*
+    NY STREAK-LOGIK
+  */
+  const selectedStreak =
+    calculateStreak(
+      selectedDay.date,
+      selectedHabitIndex,
+      today
     )
 
   const visibleHabits =
@@ -802,10 +909,7 @@ export default function Calendar() {
           >
             <div className="flex h-full w-full items-center justify-center rounded-full bg-card">
               <span className="text-sm font-bold">
-                {
-                  completionPercentage
-                }
-                %
+                {completionPercentage}%
               </span>
             </div>
           </div>
@@ -846,9 +950,7 @@ export default function Calendar() {
                 />
 
                 Streak{" "}
-                {
-                  selectedDay.streak
-                }
+                {selectedStreak}
               </span>
 
               <span className="flex items-center gap-1 rounded-full border bg-muted px-2 py-1 text-[9px]">
@@ -886,8 +988,9 @@ export default function Calendar() {
               )
 
             const completed =
-              isHabitCompleted(
-                selectedDay,
+              !selectedDay.future &&
+              isHabitCompletedOnDate(
+                selectedDay.date,
                 habitIndex
               )
 
