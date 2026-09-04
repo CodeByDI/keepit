@@ -220,13 +220,6 @@ export default function Calendar() {
   const calendarDays =
     createCalendarDays(today)
 
-  const currentMonthName =
-    capitalizeFirstLetter(
-      new Intl.DateTimeFormat("sv-SE", {
-        month: "long",
-      }).format(today)
-    )
-
   const currentMonthLabel =
     capitalizeFirstLetter(
       new Intl.DateTimeFormat("sv-SE", {
@@ -243,6 +236,15 @@ export default function Calendar() {
   const [selectedDay, setSelectedDay] =
     useState<CalendarDay>(
       initialSelectedDay
+    )
+
+  const selectedDateLabel =
+    capitalizeFirstLetter(
+      new Intl.DateTimeFormat("sv-SE", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+      }).format(selectedDay.date)
     )
 
   const completedDaysThisMonth =
@@ -460,8 +462,7 @@ export default function Calendar() {
 
           <div className="flex-1">
             <h3 className="text-xs font-semibold">
-              {selectedDay.day}{" "}
-              {currentMonthName}
+              {selectedDateLabel}
             </h3>
 
             <div className="mt-2 flex flex-wrap gap-2">
