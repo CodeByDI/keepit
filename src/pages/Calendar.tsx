@@ -14,136 +14,19 @@ import {
 } from "@phosphor-icons/react"
 
 type CalendarDay = {
+  date: Date
   day: number
   currentMonth: boolean
   completed: number
   total: number
   streak: number
-  future?: boolean
+  future: boolean
+  isToday: boolean
 }
 
+const TOTAL_HABITS = 5
+
 const weekdays = ["M", "T", "O", "T", "F", "L", "S"]
-
-const days: CalendarDay[] = [
-  { day: 27, currentMonth: false, completed: 0, total: 5, streak: 0 },
-  { day: 28, currentMonth: false, completed: 0, total: 5, streak: 0 },
-  { day: 29, currentMonth: false, completed: 0, total: 5, streak: 0 },
-  { day: 30, currentMonth: false, completed: 0, total: 5, streak: 0 },
-  { day: 31, currentMonth: false, completed: 0, total: 5, streak: 0 },
-
-  { day: 1, currentMonth: true, completed: 5, total: 5, streak: 1 },
-  { day: 2, currentMonth: true, completed: 5, total: 5, streak: 2 },
-  { day: 3, currentMonth: true, completed: 5, total: 5, streak: 3 },
-  { day: 4, currentMonth: true, completed: 5, total: 5, streak: 4 },
-  { day: 5, currentMonth: true, completed: 4, total: 5, streak: 4 },
-  { day: 6, currentMonth: true, completed: 5, total: 5, streak: 5 },
-  { day: 7, currentMonth: true, completed: 5, total: 5, streak: 6 },
-  { day: 8, currentMonth: true, completed: 3, total: 5, streak: 6 },
-  { day: 9, currentMonth: true, completed: 5, total: 5, streak: 7 },
-
-  { day: 10, currentMonth: true, completed: 5, total: 5, streak: 8 },
-  { day: 11, currentMonth: true, completed: 4, total: 5, streak: 8 },
-  { day: 12, currentMonth: true, completed: 0, total: 5, streak: 0 },
-  { day: 13, currentMonth: true, completed: 5, total: 5, streak: 9 },
-  { day: 14, currentMonth: true, completed: 5, total: 5, streak: 10 },
-  { day: 15, currentMonth: true, completed: 3, total: 5, streak: 10 },
-  { day: 16, currentMonth: true, completed: 5, total: 5, streak: 11 },
-
-  { day: 17, currentMonth: true, completed: 5, total: 5, streak: 12 },
-  { day: 18, currentMonth: true, completed: 5, total: 5, streak: 13 },
-  { day: 19, currentMonth: true, completed: 2, total: 5, streak: 13 },
-  { day: 20, currentMonth: true, completed: 5, total: 5, streak: 14 },
-  { day: 21, currentMonth: true, completed: 5, total: 5, streak: 15 },
-  { day: 22, currentMonth: true, completed: 5, total: 5, streak: 16 },
-  { day: 23, currentMonth: true, completed: 5, total: 5, streak: 17 },
-
-  { day: 24, currentMonth: true, completed: 5, total: 5, streak: 18 },
-  { day: 25, currentMonth: true, completed: 5, total: 5, streak: 19 },
-  { day: 26, currentMonth: true, completed: 5, total: 5, streak: 20 },
-  { day: 27, currentMonth: true, completed: 3, total: 5, streak: 12 },
-
-  {
-    day: 28,
-    currentMonth: true,
-    completed: 0,
-    total: 5,
-    streak: 0,
-    future: true,
-  },
-  {
-    day: 29,
-    currentMonth: true,
-    completed: 0,
-    total: 5,
-    streak: 0,
-    future: true,
-  },
-  {
-    day: 30,
-    currentMonth: true,
-    completed: 0,
-    total: 5,
-    streak: 0,
-    future: true,
-  },
-  {
-    day: 31,
-    currentMonth: true,
-    completed: 0,
-    total: 5,
-    streak: 0,
-    future: true,
-  },
-
-  {
-    day: 1,
-    currentMonth: false,
-    completed: 0,
-    total: 5,
-    streak: 0,
-    future: true,
-  },
-  {
-    day: 2,
-    currentMonth: false,
-    completed: 0,
-    total: 5,
-    streak: 0,
-    future: true,
-  },
-  {
-    day: 3,
-    currentMonth: false,
-    completed: 0,
-    total: 5,
-    streak: 0,
-    future: true,
-  },
-  {
-    day: 4,
-    currentMonth: false,
-    completed: 0,
-    total: 5,
-    streak: 0,
-    future: true,
-  },
-  {
-    day: 5,
-    currentMonth: false,
-    completed: 0,
-    total: 5,
-    streak: 0,
-    future: true,
-  },
-  {
-    day: 6,
-    currentMonth: false,
-    completed: 0,
-    total: 5,
-    streak: 0,
-    future: true,
-  },
-]
 
 const habits = [
   {
@@ -182,6 +65,109 @@ const habits = [
     background: "rgba(244, 114, 182, 0.12)",
   },
 ]
+
+function getMockCompleted(day: number) {
+  const pattern = [5, 5, 4, 5, 3, 5, 4]
+
+  return pattern[(day - 1) % pattern.length]
+}
+
+function getMockStreak(day: number, completed: number) {
+  if (completed === TOTAL_HABITS) {
+    return Math.min(day, 21)
+  }
+
+  return Math.max(
+    0,
+    Math.min(day - 1, 12)
+  )
+}
+
+function createCalendarDays(today: Date): CalendarDay[] {
+  const year = today.getFullYear()
+  const month = today.getMonth()
+
+  const normalizedToday = new Date(
+    year,
+    month,
+    today.getDate()
+  )
+
+  const firstDayOfMonth = new Date(
+    year,
+    month,
+    1
+  )
+
+  // JavaScript: söndag = 0.
+  // Vi ändrar så att måndag blir första dagen.
+  const mondayOffset =
+    (firstDayOfMonth.getDay() + 6) % 7
+
+  const gridStart = new Date(
+    year,
+    month,
+    1 - mondayOffset
+  )
+
+  const calendarDays: CalendarDay[] = []
+
+  // 6 veckor x 7 dagar = 42 kalenderceller
+  for (let index = 0; index < 42; index++) {
+    const date = new Date(
+      gridStart.getFullYear(),
+      gridStart.getMonth(),
+      gridStart.getDate() + index
+    )
+
+    const currentMonth =
+      date.getMonth() === month &&
+      date.getFullYear() === year
+
+    const isToday =
+      date.getFullYear() ===
+        normalizedToday.getFullYear() &&
+      date.getMonth() ===
+        normalizedToday.getMonth() &&
+      date.getDate() ===
+        normalizedToday.getDate()
+
+    const future =
+      date.getTime() >
+      normalizedToday.getTime()
+
+    const completed =
+      currentMonth && !future
+        ? getMockCompleted(date.getDate())
+        : 0
+
+    calendarDays.push({
+      date,
+      day: date.getDate(),
+      currentMonth,
+      completed,
+      total: TOTAL_HABITS,
+      streak:
+        currentMonth && !future
+          ? getMockStreak(
+              date.getDate(),
+              completed
+            )
+          : 0,
+      future,
+      isToday,
+    })
+  }
+
+  return calendarDays
+}
+
+function capitalizeFirstLetter(value: string) {
+  return (
+    value.charAt(0).toUpperCase() +
+    value.slice(1)
+  )
+}
 
 function ProgressRing({
   completed,
@@ -223,14 +209,68 @@ function ProgressRing({
 }
 
 export default function Calendar() {
+  const today = new Date()
+
+  const calendarDays =
+    createCalendarDays(today)
+
+  const currentMonthName =
+    capitalizeFirstLetter(
+      new Intl.DateTimeFormat("sv-SE", {
+        month: "long",
+      }).format(today)
+    )
+
+  const currentMonthLabel =
+    capitalizeFirstLetter(
+      new Intl.DateTimeFormat("sv-SE", {
+        month: "long",
+        year: "numeric",
+      }).format(today)
+    )
+
+  const initialSelectedDay =
+    calendarDays.find(
+      (date) => date.isToday
+    ) as CalendarDay
+
   const [selectedDay, setSelectedDay] =
     useState<CalendarDay>(
-      days.find(
-        (date) =>
-          date.day === 27 &&
-          date.currentMonth
-      ) as CalendarDay
+      initialSelectedDay
     )
+
+  const completedDaysThisMonth =
+    calendarDays.filter(
+      (date) =>
+        date.currentMonth &&
+        !date.future
+    )
+
+  const fullyCompletedDays =
+    completedDaysThisMonth.filter(
+      (date) =>
+        date.completed === date.total
+    ).length
+
+  const totalCompletedHabits =
+    completedDaysThisMonth.reduce(
+      (sum, date) =>
+        sum + date.completed,
+      0
+    )
+
+  const totalPossibleHabits =
+    completedDaysThisMonth.length *
+    TOTAL_HABITS
+
+  const monthPercentage =
+    totalPossibleHabits > 0
+      ? Math.round(
+          (totalCompletedHabits /
+            totalPossibleHabits) *
+            100
+        )
+      : 0
 
   const completionPercentage =
     Math.round(
@@ -249,7 +289,7 @@ export default function Calendar() {
         </h1>
 
         <p className="mt-1 text-xs text-muted-foreground">
-          Augusti 2026
+          {currentMonthLabel}
         </p>
       </header>
 
@@ -270,7 +310,7 @@ export default function Calendar() {
 
             <div className="mt-2 flex items-end gap-2">
               <span className="text-[30px] font-extrabold leading-none tracking-[-0.04em]">
-                86
+                {monthPercentage}
               </span>
 
               <span className="mb-[2px] text-xs">
@@ -279,7 +319,9 @@ export default function Calendar() {
             </div>
 
             <p className="mt-2 text-xs text-muted-foreground">
-              23 av 27 dagar fullständiga
+              {fullyCompletedDays} av{" "}
+              {completedDaysThisMonth.length}{" "}
+              dagar fullständiga
             </p>
           </div>
 
@@ -297,7 +339,8 @@ export default function Calendar() {
                   <span
                     className="h-[7px] w-[7px] rounded-full"
                     style={{
-                      background: habit.color,
+                      background:
+                        habit.color,
                     }}
                   />
 
@@ -326,19 +369,18 @@ export default function Calendar() {
         </div>
 
         <div className="grid grid-cols-7">
-          {days.map((date, index) => {
-            const isToday =
-              date.day === 27 &&
-              date.currentMonth
-
+          {calendarDays.map((date) => {
             const isSelected =
-              selectedDay.day === date.day &&
-              selectedDay.currentMonth ===
-                date.currentMonth
+              selectedDay.date.getFullYear() ===
+                date.date.getFullYear() &&
+              selectedDay.date.getMonth() ===
+                date.date.getMonth() &&
+              selectedDay.date.getDate() ===
+                date.date.getDate()
 
             return (
               <button
-                key={`${date.day}-${index}`}
+                key={date.date.getTime()}
                 type="button"
                 disabled={
                   !date.currentMonth ||
@@ -354,7 +396,7 @@ export default function Calendar() {
                   date.future
                     ? "cursor-default opacity-25"
                     : "cursor-pointer hover:bg-muted/40",
-                  isToday
+                  date.isToday
                     ? "bg-primary/[0.06]"
                     : "",
                   isSelected
@@ -364,7 +406,7 @@ export default function Calendar() {
               >
                 <span
                   className={
-                    isToday
+                    date.isToday
                       ? "font-semibold text-primary"
                       : "text-foreground"
                   }
@@ -374,13 +416,15 @@ export default function Calendar() {
 
                 <div
                   className={
-                    isToday
+                    date.isToday
                       ? "rounded-full ring-1 ring-primary/70 ring-offset-2 ring-offset-card"
                       : ""
                   }
                 >
                   <ProgressRing
-                    completed={date.completed}
+                    completed={
+                      date.completed
+                    }
                   />
                 </div>
               </button>
@@ -411,7 +455,8 @@ export default function Calendar() {
 
           <div className="flex-1">
             <h3 className="text-xs font-semibold">
-              {selectedDay.day} augusti
+              {selectedDay.day}{" "}
+              {currentMonthName}
             </h3>
 
             <div className="mt-2 flex flex-wrap gap-2">
@@ -439,7 +484,8 @@ export default function Calendar() {
                   className="text-orange-500"
                 />
 
-                Streak {selectedDay.streak}
+                Streak{" "}
+                {selectedDay.streak}
               </span>
 
               <span className="flex items-center gap-1 rounded-full border bg-muted px-2 py-1 text-[9px]">
@@ -461,7 +507,8 @@ export default function Calendar() {
           const Icon = habit.icon
 
           const completed =
-            index < selectedDay.completed
+            index <
+            selectedDay.completed
 
           return (
             <div
@@ -475,8 +522,10 @@ export default function Calendar() {
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border"
                 style={{
                   color: habit.color,
-                  background: habit.background,
-                  borderColor: habit.color,
+                  background:
+                    habit.background,
+                  borderColor:
+                    habit.color,
                 }}
               >
                 <Icon size={14} />
