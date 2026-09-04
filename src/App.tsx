@@ -1,19 +1,14 @@
 import { useEffect, useState } from "react"
+import { Route, Routes } from "react-router-dom"
 
 import { AppSidebar } from "@/components/app-sidebar"
 import Calendar from "@/pages/Calendar"
+import { HabitDetailPage } from "@/pages/HabitDetailPage"
+import { StartPage } from "@/pages/StartPage"
 
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbList,
-  BreadcrumbPage,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
 import {
   SidebarInset,
   SidebarProvider,
-  SidebarTrigger,
 } from "@/components/ui/sidebar"
 
 function App() {
@@ -31,28 +26,19 @@ function App() {
       />
 
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
+        <Routes>
+          <Route path="/" element={<StartPage />} />
 
-          <Separator
-            orientation="vertical"
-            className="mr-2 h-4"
+          <Route
+            path="/kalender"
+            element={<Calendar />}
           />
 
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbPage>
-                  Kalender
-                </BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-        </header>
-
-        <div className="flex flex-1 flex-col p-4 md:p-6">
-          <Calendar />
-        </div>
+          <Route
+            path="/habits/:id"
+            element={<HabitDetailPage />}
+          />
+        </Routes>
       </SidebarInset>
     </SidebarProvider>
   )
