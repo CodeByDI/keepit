@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -22,6 +23,16 @@ export function NavUser({
   user: { name: string; email: string; avatar: string }
 }) {
   const { isMobile } = useSidebar()
+  const navigate = useNavigate()
+
+  // ─── Logout Handler ──────────────────────────────
+  const handleLogout = () => {
+    // Clear user from localStorage
+    localStorage.removeItem("user")
+
+    // Redirect to login page
+    navigate("/login")
+  }
 
   return (
     <SidebarMenu>
@@ -80,7 +91,11 @@ export function NavUser({
 
             <DropdownMenuSeparator />
 
-            <DropdownMenuItem className="text-destructive focus:text-destructive">
+            {/* ─── Logout with handler ─── */}
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onClick={handleLogout}
+            >
               <SignOutIcon size={16} className="mr-2" /> Logga ut
             </DropdownMenuItem>
 
