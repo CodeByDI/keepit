@@ -1,4 +1,7 @@
+// src/components/app-sidebar.tsx
 import * as React from "react"
+import { Link } from "react-router-dom"
+import { useTheme } from "@/components/theme-provider"
 import { NavUser } from "@/components/nav-user"
 import {
   Sidebar,
@@ -31,10 +34,10 @@ const data = {
     avatar: "/avatars/maja.jpg",
   },
   navMain: [
-    { title: "Start",      url: "/",          icon: <HouseIcon size={16} />,         isActive: true },
-    { title: "Kalender",   url: "/kalender",  icon: <CalendarBlankIcon size={16} />              },
-    { title: "Statistik",  url: "/statistik", icon: <ChartBarIcon size={16} />                   },
-    { title: "Profil",     url: "/profil",    icon: <UserIcon size={16} />                       },
+    { title: "Start", url: "/", icon: <HouseIcon size={16} />, isActive: true },
+    { title: "Kalender", url: "/kalender", icon: <CalendarBlankIcon size={16} /> },
+    { title: "Statistik", url: "/statistik", icon: <ChartBarIcon size={16} /> },
+    { title: "Profil", url: "/profil", icon: <UserIcon size={16} /> },
   ],
 }
 
@@ -45,9 +48,9 @@ function KeepItLogo() {
     <svg style={{ width: 32, height: 32 }} width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="keepit-logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%"   stopColor="var(--primary)" />
-          <stop offset="35%"  stopColor="var(--primary)" />
-          <stop offset="70%"  stopColor="#a89bfa" />
+          <stop offset="0%" stopColor="var(--primary)" />
+          <stop offset="35%" stopColor="var(--primary)" />
+          <stop offset="70%" stopColor="#a89bfa" />
           <stop offset="100%" stopColor="#f472b6" />
         </linearGradient>
       </defs>
@@ -59,10 +62,7 @@ function KeepItLogo() {
 
 // ─── AppSidebar ───────────────────────────────────────────────────────────────
 
-type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
-  isDark: boolean
-  onToggleTheme: () => void
-}
+type AppSidebarProps = React.ComponentProps<typeof Sidebar>
 
 function NavItems() {
   const { state } = useSidebar()
@@ -72,7 +72,7 @@ function NavItems() {
       {data.navMain.map((item) => (
         <SidebarMenuItem key={item.title}>
           <SidebarMenuButton
-            render={<a href={item.url} />}
+            render={<Link to={item.url} />}
             tooltip={item.title}
             className={item.isActive ? "rounded-none font-medium" : "text-muted-foreground"}
             style={
@@ -92,15 +92,25 @@ function NavItems() {
   )
 }
 
-export function AppSidebar({ isDark, onToggleTheme, ...props }: AppSidebarProps) {
+export function AppSidebar(props: AppSidebarProps) {
+  const { theme, setTheme } = useTheme()
+  const isDark = theme === "dark"
+
+  const toggleTheme = () => {
+    setTheme(isDark ? "light" : "dark")
+  }
+
   return (
     <Sidebar variant="inset" collapsible="icon" {...props}>
-
       {/* ── Brand header ── */}
       <SidebarHeader className="pb-0">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" className="h-14 py-1" render={<a href="/" />}>
+            <SidebarMenuButton
+              size="lg"
+              className="h-14 py-1"
+              render={<Link to="/" />}
+            >
               <KeepItLogo />
               <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                 <span className="truncate font-semibold" style={{ color: "var(--primary)" }}>
@@ -128,7 +138,7 @@ export function AppSidebar({ isDark, onToggleTheme, ...props }: AppSidebarProps)
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              onClick={onToggleTheme}
+              onClick={toggleTheme}
               tooltip={isDark ? "Ljust läge" : "Mörkt läge"}
               className="text-muted-foreground"
             >
@@ -139,7 +149,6 @@ export function AppSidebar({ isDark, onToggleTheme, ...props }: AppSidebarProps)
         </SidebarMenu>
         <NavUser user={data.user} />
       </SidebarFooter>
-
     </Sidebar>
   )
 }
