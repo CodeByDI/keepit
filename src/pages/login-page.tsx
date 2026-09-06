@@ -12,21 +12,21 @@ export default function LoginPage() {
             {/* ── Corner Details ── */}
 
             {/* Top Left */}
-            <div className="absolute top-6 left-6 text-xs tracking-wider font-light" style={{ color: "#334155" }}>
-                <div className="text-base mb-1" style={{ color: "#2b2d33" }}>+</div>
+            <div className="absolute top-6 left-6 text-[10px] tracking-wider font-medium" style={{ color: "#334155" }}>
+                <div className="text-[14px]" style={{ color: "#334155" }}>+</div>
                 KEEPIT
             </div>
 
             {/* Top Right */}
-            <div className="absolute top-6 right-6 text-xs tracking-wider font-light text-right" style={{ color: "#a9a1f0" }}>
-                <div className="text-base mb-1 text-right" style={{ color: "#a9a1f0" }}>+</div>
+            <div className="absolute top-6 right-6 text-[10px] tracking-wider font-medium text-right" style={{ color: "#a9a1f0" }}>
+                <div className="text-[14px] text-right" style={{ color: "#a9a1f0" }}>+</div>
                 V 1.0
             </div>
 
             {/* Bottom Right */}
-            <div className="absolute bottom-6 right-6 text-[10px] tracking-wider font-light text-right" style={{ color: "#334155" }}>
+            <div className="absolute bottom-6 right-6 text-[10px] tracking-wider font-medium text-right" style={{ color: "#334155" }}>
                 CONSISTENCY IS KEY
-                <div className="text-base mt-1 text-right" style={{ color: "#2b2d33" }}>+</div>
+                <div className="text-[14px] mt-1 text-right" style={{ color: "#334155" }}>+</div>
             </div>
 
             {/* ── Login Form ── */}

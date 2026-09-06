@@ -30,7 +30,7 @@ export function LoginForm({
     ...props
 }: React.ComponentProps<"div">) {
     // ─── State ──────────────────────────────────────
-    const [email, setEmail] = useState("maja@keepit.nu")
+    const [email, setEmail] = useState("maja@example.com")
     const [password, setPassword] = useState("MajaÄrBäst123")
     const [error, setError] = useState<string | null>(null)
     const [isLoading, setIsLoading] = useState(false)
