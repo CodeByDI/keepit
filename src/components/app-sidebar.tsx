@@ -1,6 +1,6 @@
 // src/components/app-sidebar.tsx
 import * as React from "react"
-import { Link } from "react-router-dom"
+import { Link, useLocation } from "react-router-dom"  // ← Add useLocation
 import { useTheme } from "@/components/theme-provider"
 import { NavUser } from "@/components/nav-user"
 import {
@@ -34,7 +34,7 @@ const data = {
     avatar: "/avatars/maja.jpg",
   },
   navMain: [
-    { title: "Start", url: "/", icon: <HouseIcon size={16} />, isActive: true },
+    { title: "Start", url: "/", icon: <HouseIcon size={16} /> },
     { title: "Kalender", url: "/kalender", icon: <CalendarBlankIcon size={16} /> },
     { title: "Statistik", url: "/statistik", icon: <ChartBarIcon size={16} /> },
     { title: "Profil", url: "/profil", icon: <UserIcon size={16} /> },
@@ -66,28 +66,35 @@ type AppSidebarProps = React.ComponentProps<typeof Sidebar>
 
 function NavItems() {
   const { state } = useSidebar()
+  const location = useLocation()  // ← Get current path
   const collapsed = state === "collapsed"
+
   return (
     <SidebarMenu>
-      {data.navMain.map((item) => (
-        <SidebarMenuItem key={item.title}>
-          <SidebarMenuButton
-            render={<Link to={item.url} />}
-            tooltip={item.title}
-            className={item.isActive ? "rounded-none font-medium" : "text-muted-foreground"}
-            style={
-              item.isActive
-                ? collapsed
-                  ? { color: "var(--primary)", backgroundColor: "color-mix(in oklch, var(--primary) 12%, transparent)", borderRadius: "8px" }
-                  : { borderLeft: "2px solid var(--primary)", paddingLeft: "10px", color: "var(--primary)" }
-                : undefined
-            }
-          >
-            {item.icon}
-            <span>{item.title}</span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      ))}
+      {data.navMain.map((item) => {
+        // Check if this item's URL matches the current path
+        const isActive = location.pathname === item.url
+
+        return (
+          <SidebarMenuItem key={item.title}>
+            <SidebarMenuButton
+              render={<Link to={item.url} />}
+              tooltip={item.title}
+              className={isActive ? "rounded-none font-medium" : "text-muted-foreground"}
+              style={
+                isActive
+                  ? collapsed
+                    ? { color: "var(--primary)", backgroundColor: "color-mix(in oklch, var(--primary) 12%, transparent)", borderRadius: "8px" }
+                    : { borderLeft: "2px solid var(--primary)", paddingLeft: "10px", color: "var(--primary)" }
+                  : undefined
+              }
+            >
+              {item.icon}
+              <span>{item.title}</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        )
+      })}
     </SidebarMenu>
   )
 }
