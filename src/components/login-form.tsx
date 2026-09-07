@@ -105,7 +105,7 @@ export function LoginForm({
                 <Button
                     variant="outline"
                     type="button"
-                    onClick={() => alert("Google login kommer snart! 🚀")}
+                    // onClick={() => alert("Google login kommer snart! 🚀")}
                     className="w-full h-10 justify-center text-sm font-medium"
                     style={{
                         background: "var(--login-card-bg)",
@@ -184,12 +184,18 @@ export function LoginForm({
                     <Button
                         type="submit"
                         disabled={isLoading}
-                        className="w-full h-11 justify-center text-sm font-medium text-white border-none transition-opacity mt-2"
+                        className="w-full h-10 justify-center text-sm font-medium text-white border-none transition-all duration-300 mt-2"
                         style={{
-                            background: "linear-gradient(135deg, #5649d4 0%, #6d5cf6 45%, #8b5cf6 78%, #f472b6 100%)",
-                            boxShadow: "0 0 10px rgba(109,92,246,0.20), 0 0 20px rgba(244,114,182,0.12)",
+                            background: isHovered
+                                ? `linear-gradient(135deg, rgba(86,73,212,0.7) 0%, rgba(109,92,246,0.7) 45%, rgba(139,92,246,0.7) 78%, rgba(244,114,182,0.7) 100%)`
+                                : `linear-gradient(135deg, #5649d4 0%, #6d5cf6 45%, #8b5cf6 78%, #f472b6 100%)`,
+                            boxShadow: isHovered
+                                ? "0 0 20px rgba(109,92,246,0.30), 0 0 30px rgba(244,114,182,0.25)"
+                                : "0 0 10px rgba(109,92,246,0.20), 0 0 20px rgba(244,114,182,0.12)",
                             color: "white",
                         }}
+                        onMouseEnter={() => setIsHovered(true)}
+                        onMouseLeave={() => setIsHovered(false)}
                     >
                         {isLoading ? "Loggar in..." : "Logga in"}
                     </Button>
