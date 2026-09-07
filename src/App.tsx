@@ -7,6 +7,7 @@ import { HabitDetailPage } from "@/pages/HabitDetailPage"
 import LoginPage from "@/pages/login-page"
 import { ProtectedRoute } from "@/components/protected-route"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+import { ProfilePage } from "@/pages/ProfilePage"
 
 // Layout for authenticated pages
 function AppLayout() {
@@ -17,6 +18,7 @@ function AppLayout() {
         <Routes>
           <Route path="/" element={<StartPage />} />
           <Route path="/habits/:id" element={<HabitDetailPage />} />
+          <Route path="/profil" element={<ProfilePage />} />
         </Routes>
       </SidebarInset>
     </SidebarProvider>
