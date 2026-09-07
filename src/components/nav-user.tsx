@@ -1,3 +1,4 @@
+// src/components/nav-user.tsx
 import { useNavigate } from "react-router-dom"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -25,13 +26,18 @@ export function NavUser({
   const { isMobile } = useSidebar()
   const navigate = useNavigate()
 
-  // ─── Logout Handler ──────────────────────────────
+  // ─── Handlers ──────────────────────────────────────
   const handleLogout = () => {
-    // Clear user from localStorage
     localStorage.removeItem("user")
-
-    // Redirect to login page
     navigate("/login")
+  }
+
+  const handleProfile = () => {
+    navigate("/profil")
+  }
+
+  const handleSettings = () => {
+    navigate("/inställningar")
   }
 
   return (
@@ -81,17 +87,20 @@ export function NavUser({
             <DropdownMenuSeparator />
 
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              {/* ── Profile ── */}
+              <DropdownMenuItem onClick={handleProfile}>
                 <UserIcon size={16} className="mr-2" /> Profil
               </DropdownMenuItem>
-              <DropdownMenuItem>
+
+              {/* ── Settings ── */}
+              <DropdownMenuItem onClick={handleSettings}>
                 <GearIcon size={16} className="mr-2" /> Inställningar
               </DropdownMenuItem>
             </DropdownMenuGroup>
 
             <DropdownMenuSeparator />
 
-            {/* ─── Logout with handler ─── */}
+            {/* ── Logout ── */}
             <DropdownMenuItem
               className="text-destructive focus:text-destructive"
               onClick={handleLogout}
