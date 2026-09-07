@@ -47,6 +47,7 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  
 }
 
 /* ─────────────────────────────────────────
@@ -87,7 +88,7 @@
   /* Strokes */
   --border:              oklch(0 0 0 / 8%);         /* rgba(0,0,0,0.08) */
   --input:               oklch(0 0 0 / 13%);        /* rgba(0,0,0,0.13) */
-  --ring:                #6d5cf6   /* blurple focus ring */
+  --ring:                #6d5cf6;   /* blurple focus ring */
 
   /* Habit palette — 5-step blurple → pink progression */
   --chart-1: #6d5cf6;  /* Habit 1 — blurple  */
@@ -120,6 +121,13 @@
   --sidebar-accent-foreground: oklch(0.461 0.244 272);
   --sidebar-border:            oklch(0 0 0 / 8%);
   --sidebar-ring:              oklch(0.541 0.27 273.4);
+
+    /* ── Login Form Specific ── */
+  --login-card-bg: #ffffff;              /* Card background in light mode */
+  --login-input-bg: #f0f2fa;             /* Input background in light mode */
+  --login-label-color: #475569;          /* Label color in light mode */
+  --login-divider-text: #94a3b8;         /* Divider text color in light mode */
+  --login-border-top: rgba(109,92,246,0.35);
 }
 
 /* ─────────────────────────────────────────
@@ -181,7 +189,7 @@
   --text-dim:            rgba(255,255,255,0.15);
 
   /* Sidebar */
-  --sidebar:                   oklch(0.143 0.038 264);
+  --sidebar:                   lch(2.57% 9.41 280);
   --sidebar-foreground:        oklch(0.968 0.014 273);
   --sidebar-primary:           oklch(0.541 0.27 273.4);
   --sidebar-primary-foreground: oklch(0.968 0.014 273);
@@ -189,6 +197,13 @@
   --sidebar-accent-foreground: oklch(0.968 0.014 273);
   --sidebar-border:            oklch(1 0 0 / 6%);
   --sidebar-ring:              oklch(0.541 0.27 273.4);
+
+  /* ── Login Form Specific ── */
+  --login-card-bg: #272e5f2f;              /* Card background in dark mode */
+  --login-input-bg: #121429;             /* Input background in dark mode */
+  --login-label-color: #334155;          /* Label color in dark mode */
+  --login-divider-text: #334155;         /* Divider text color in dark mode */
+  --login-border-top: #6d5cf659;
 }
 
 @layer base {
