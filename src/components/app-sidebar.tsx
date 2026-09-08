@@ -1,6 +1,6 @@
 // src/components/app-sidebar.tsx
 import * as React from "react"
-import { Link, useLocation } from "react-router-dom"  // ← Add useLocation
+import { Link, useLocation } from "react-router-dom"
 import { useTheme } from "@/components/theme-provider"
 import { NavUser } from "@/components/nav-user"
 import {
@@ -23,6 +23,7 @@ import {
   UserIcon,
   MoonIcon,
   SunIcon,
+  GearIcon,
 } from "@phosphor-icons/react"
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
@@ -38,6 +39,9 @@ const data = {
     { title: "Kalender", url: "/kalender", icon: <CalendarBlankIcon size={16} /> },
     { title: "Statistik", url: "/statistik", icon: <ChartBarIcon size={16} /> },
     { title: "Profil", url: "/profil", icon: <UserIcon size={16} /> },
+  ],
+  navSecondary: [
+    { title: "Inställningar", url: "/settings", icon: <GearIcon size={16} /> },
   ],
 }
 
@@ -64,15 +68,14 @@ function KeepItLogo() {
 
 type AppSidebarProps = React.ComponentProps<typeof Sidebar>
 
-function NavItems() {
+function NavItems({ items }: { items: typeof data.navMain }) {
   const { state } = useSidebar()
-  const location = useLocation()  // ← Get current path
+  const location = useLocation()
   const collapsed = state === "collapsed"
 
   return (
     <SidebarMenu>
-      {data.navMain.map((item) => {
-        // Check if this item's URL matches the current path
+      {items.map((item) => {
         const isActive = location.pathname === item.url
 
         return (
@@ -135,7 +138,15 @@ export function AppSidebar(props: AppSidebarProps) {
           <SidebarGroupLabel className="h-5 mb-2 uppercase tracking-wider">
             Navigering
           </SidebarGroupLabel>
-          <NavItems />
+          <NavItems items={data.navMain} />
+        </SidebarGroup>
+
+        {/* ── Separator ── */}
+        <SidebarSeparator className="my-2" />
+
+        {/* ── Secondary Navigation (Settings) ── */}
+        <SidebarGroup>
+          <NavItems items={data.navSecondary} />
         </SidebarGroup>
       </SidebarContent>
 
