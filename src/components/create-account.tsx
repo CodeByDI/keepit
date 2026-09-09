@@ -1,5 +1,5 @@
-// src/components/create-account.tsx
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"  // ← ADD THIS
 import {
   Dialog,
   DialogContent,
@@ -25,6 +25,8 @@ export function CreateAccount({ open, onClose }: CreateAccountProps) {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const navigate = useNavigate()  // ← ADD THIS
 
   // ─── Handlers ────────────────────────────────────
   function handleSave() {
@@ -57,6 +59,10 @@ export function CreateAccount({ open, onClose }: CreateAccountProps) {
     localStorage.setItem("isLoggedIn", "true")
 
     console.log("Account created:", { name, email })
+
+    // ─── Navigate to home page ──────────────────
+    navigate("/")
+
     onClose()
   }
 
