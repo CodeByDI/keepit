@@ -54,64 +54,39 @@ export function LoginForm({
         try {
             await new Promise(resolve => setTimeout(resolve, 1000))
 
-            // ─── Check if user exists in localStorage ──
+            // ─── 1. Check if user exists in localStorage ──
             const stored = localStorage.getItem("user")
-            console.log("📦 Raw localStorage user:", stored)
-
             let storedUser = null
+
             if (stored) {
                 try {
                     storedUser = JSON.parse(stored)
-                    console.log("✅ Parsed stored user:", storedUser)
-                } catch (e) {
-                    console.error("❌ Failed to parse user:", e)
+                } catch {
+                    // Invalid JSON
                 }
             }
 
-            // ─── If NO user exists in localStorage ──
+            // ─── 2. If NO user exists → Show error ──
             if (!storedUser) {
-                // Create a new account (first-time setup)
-                const newUser = {
-                    email: email.trim(),
-                    password: password.trim(),
-                    name: email.split('@')[0] || "Användare",
-                    memberSince: new Date().toLocaleDateString('sv-SE', { month: 'short', year: 'numeric' }),
-                }
-                localStorage.setItem("user", JSON.stringify(newUser))
-                localStorage.setItem("isLoggedIn", "true")
-                console.log("🆕 New user created:", newUser)
-                navigate("/")
+                setError("❌ Inget konto hittas. Skapa ett konto först.")
                 setIsLoading(false)
                 return
             }
 
-            // ─── User EXISTS - validate credentials ──
-            console.log("🔍 Validating credentials...")
-            console.log("📧 Entered email:", email.trim())
-            console.log("📧 Stored email:", storedUser.email)
-            console.log("🔑 Entered password:", password.trim())
-            console.log("🔑 Stored password:", storedUser.password)
-
-            const emailMatches = storedUser.email.toLowerCase() === email.trim().toLowerCase()
-            const passwordMatches = storedUser.password === password.trim()
-
-            console.log("📧 Email matches?", emailMatches)
-            console.log("🔑 Password matches?", passwordMatches)
+            // ─── 3. User EXISTS → Validate credentials ──
+            const emailMatches = storedUser.email.toLowerCase() === email.toLowerCase()
+            const passwordMatches = storedUser.password === password
 
             if (emailMatches && passwordMatches) {
                 localStorage.setItem("isLoggedIn", "true")
-                console.log("✅ Login successful!")
                 navigate("/")
             } else if (emailMatches && !passwordMatches) {
                 setError("❌ Fel lösenord. Försök igen.")
-                console.log("❌ Wrong password")
             } else {
                 setError("❌ Inget konto hittas med den e-postadressen")
-                console.log("❌ No account found for email:", email)
             }
         } catch (err) {
             setError("Något gick fel. Försök igen.")
-            console.error("❌ Login error:", err)
         } finally {
             setIsLoading(false)
         }
@@ -127,7 +102,6 @@ export function LoginForm({
         }
         localStorage.setItem("user", JSON.stringify(fakeUser))
         localStorage.setItem("isLoggedIn", "true")
-        console.log("✅ Social login:", provider, fakeUser)
         navigate("/")
     }
 

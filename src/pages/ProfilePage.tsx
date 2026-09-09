@@ -38,7 +38,6 @@ export function ProfilePage() {
     if (stored) {
       try {
         const parsed = JSON.parse(stored)
-        console.log("🔍 ProfilePage - Loaded user:", parsed)
         return {
           ...defaultUser,
           name: parsed.name || defaultUser.name,
@@ -47,41 +46,33 @@ export function ProfilePage() {
           memberSince: parsed.memberSince || defaultUser.memberSince,
         }
       } catch {
-        console.error("❌ ProfilePage - Error parsing user:", stored)
         return defaultUser
       }
     }
-    console.log("ℹ️ ProfilePage - No user in localStorage, using default")
     return defaultUser
   })
 
   // ─── Update user in localStorage ──
   const handleSaveProfile = (data: { name: string; email: string; password?: string }) => {
-    console.log("📝 ProfilePage - Saving profile:", data)
-
     const updatedUser = {
       ...user,
       name: data.name,
       email: data.email,
     }
 
-    // If password is provided, store it
     if (data.password) {
       updatedUser.password = data.password
-      console.log("🔑 ProfilePage - New password saved:", data.password)
     }
 
-    // Save to localStorage
     localStorage.setItem("user", JSON.stringify(updatedUser))
-    console.log("✅ ProfilePage - User saved to localStorage:", updatedUser)
-
-    // Update state
     setUser(updatedUser)
   }
 
+  // ─── Logout: Keep user data, only remove session ──
   const handleLogout = () => {
-    console.log("🚪 ProfilePage - Logging out")
-    localStorage.removeItem("user")
+    console.log("🚪 Logging out...")
+    // ✅ Keep user data, just remove login session
+    localStorage.removeItem("isLoggedIn")
     navigate("/login")
   }
 
