@@ -26,6 +26,9 @@ const defaultUser = {
   avatar: "/avatars/maja.jpg",
 }
 
+// ─── Custom event name ──────────────────────────────
+const USER_UPDATED_EVENT = "userUpdated"
+
 export function NavUser() {
   const { isMobile } = useSidebar()
   const navigate = useNavigate()
@@ -33,42 +36,52 @@ export function NavUser() {
   // ─── State ──────────────────────────────────────────
   const [user, setUser] = useState(defaultUser)
 
-  // ─── Load user from localStorage on mount ──────────
-  useEffect(() => {
-    const loadUser = () => {
-      const stored = localStorage.getItem("user")
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored)
-          setUser({
-            name: parsed.name || defaultUser.name,
-            email: parsed.email || defaultUser.email,
-            avatar: defaultUser.avatar,
-          })
-        } catch {
-          setUser(defaultUser)
-        }
-      } else {
+  // ─── Load user from localStorage ────────────────────
+  const loadUser = () => {
+    const stored = localStorage.getItem("user")
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored)
+        setUser({
+          name: parsed.name || defaultUser.name,
+          email: parsed.email || defaultUser.email,
+          avatar: defaultUser.avatar,
+        })
+      } catch {
         setUser(defaultUser)
       }
+    } else {
+      setUser(defaultUser)
     }
+  }
 
+  // ─── Listen for changes ─────────────────────────────
+  useEffect(() => {
     loadUser()
 
-    // Listen for storage changes (when profile is updated)
+    // Listen for storage changes (other tabs)
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === "user") {
         loadUser()
       }
     }
 
+    // Listen for custom event (same tab)
+    const handleCustomEvent = () => {
+      loadUser()
+    }
+
     window.addEventListener("storage", handleStorageChange)
-    return () => window.removeEventListener("storage", handleStorageChange)
+    window.addEventListener(USER_UPDATED_EVENT, handleCustomEvent)
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange)
+      window.removeEventListener(USER_UPDATED_EVENT, handleCustomEvent)
+    }
   }, [])
 
   // ─── Handlers ──────────────────────────────────────
   const handleLogout = () => {
-    // ✅ Only remove login session, keep user data
     localStorage.removeItem("isLoggedIn")
     navigate("/login")
   }
@@ -139,12 +152,9 @@ export function NavUser() {
             <DropdownMenuSeparator />
 
             <DropdownMenuGroup>
-              {/* ── Profile ── */}
               <DropdownMenuItem onClick={handleProfile}>
                 <UserIcon size={16} className="mr-2" /> Profil
               </DropdownMenuItem>
-
-              {/* ── Settings ── */}
               <DropdownMenuItem onClick={handleSettings}>
                 <GearIcon size={16} className="mr-2" /> Inställningar
               </DropdownMenuItem>
@@ -152,7 +162,6 @@ export function NavUser() {
 
             <DropdownMenuSeparator />
 
-            {/* ── Logout ── */}
             <DropdownMenuItem
               className="text-destructive focus:text-destructive"
               onClick={handleLogout}

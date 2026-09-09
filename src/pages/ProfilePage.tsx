@@ -66,6 +66,12 @@ export function ProfilePage() {
 
     localStorage.setItem("user", JSON.stringify(updatedUser))
     setUser(updatedUser)
+
+    // ─── 🔥 Notify NavUser about the update ──
+    window.dispatchEvent(new Event("userUpdated"))
+
+    // ─── Keep login session active ──
+    localStorage.setItem("isLoggedIn", "true")
   }
 
   // ─── Logout: Keep user data, only remove session ──
