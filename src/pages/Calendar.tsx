@@ -15,6 +15,11 @@ import {
   PersonSimpleRun,
 } from "@phosphor-icons/react"
 
+import {
+  WeeklyHabitView,
+  type WeeklyHabitDay,
+} from "@/components/weekly-habit-view"
+
 type CalendarDay = {
   date: Date
   day: number
@@ -72,20 +77,16 @@ const habits = [
   },
 ] as const
 
-type HabitId =
-  (typeof habits)[number]["id"]
+type HabitId = (typeof habits)[number]["id"]
 
 function sameDate(
   first: Date,
   second: Date
 ) {
   return (
-    first.getFullYear() ===
-      second.getFullYear() &&
-    first.getMonth() ===
-      second.getMonth() &&
-    first.getDate() ===
-      second.getDate()
+    first.getFullYear() === second.getFullYear() &&
+    first.getMonth() === second.getMonth() &&
+    first.getDate() === second.getDate()
   )
 }
 
@@ -94,10 +95,8 @@ function sameMonth(
   second: Date
 ) {
   return (
-    first.getFullYear() ===
-      second.getFullYear() &&
-    first.getMonth() ===
-      second.getMonth()
+    first.getFullYear() === second.getFullYear() &&
+    first.getMonth() === second.getMonth()
   )
 }
 
@@ -164,9 +163,7 @@ function isDayCompletedForStreak(
     return completed === TOTAL_HABITS
   }
 
-  return (
-    selectedHabitIndex < completed
-  )
+  return selectedHabitIndex < completed
 }
 
 /*
@@ -314,6 +311,97 @@ function createCalendarDays(
   return calendarDays
 }
 
+/*
+  Skapar veckans sju dagar
+  från måndag till söndag.
+
+  Veckan utgår från den dag
+  användaren har valt.
+*/
+function createWeekDays(
+  referenceDate: Date,
+  today: Date,
+  selectedHabitIndex: number | null
+): WeeklyHabitDay[] {
+  const normalizedReferenceDate =
+    normalizeDate(referenceDate)
+
+  const normalizedToday =
+    normalizeDate(today)
+
+  /*
+    getDay:
+    söndag = 0
+    måndag = 1
+
+    Vi ändrar så att:
+    måndag = 0
+    söndag = 6
+  */
+  const dayOffset =
+    (normalizedReferenceDate.getDay() + 6) %
+    7
+
+  const monday = new Date(
+    normalizedReferenceDate.getFullYear(),
+    normalizedReferenceDate.getMonth(),
+    normalizedReferenceDate.getDate() -
+      dayOffset
+  )
+
+  return Array.from(
+    { length: 7 },
+    (_, index) => {
+      const date = new Date(
+        monday.getFullYear(),
+        monday.getMonth(),
+        monday.getDate() + index
+      )
+
+      const future =
+        date.getTime() >
+        normalizedToday.getTime()
+
+      let completed = 0
+      let total = TOTAL_HABITS
+
+      if (!future) {
+        if (
+          selectedHabitIndex === null
+        ) {
+          completed =
+            getMockCompleted(date)
+        } else {
+          total = 1
+
+          completed =
+            isHabitCompletedOnDate(
+              date,
+              selectedHabitIndex
+            )
+              ? 1
+              : 0
+        }
+      } else if (
+        selectedHabitIndex !== null
+      ) {
+        total = 1
+      }
+
+      return {
+        date,
+        completed,
+        total,
+        future,
+        isToday: sameDate(
+          date,
+          normalizedToday
+        ),
+      }
+    }
+  )
+}
+
 function capitalizeFirstLetter(
   value: string
 ) {
@@ -379,7 +467,8 @@ function ProgressRing({
     <div
       className="h-7 w-7 rounded-full p-[3px]"
       style={{
-        background: `conic-gradient(${segments})`,
+        background:
+          `conic-gradient(${segments})`,
       }}
     >
       <div className="h-full w-full rounded-full bg-card" />
@@ -457,6 +546,13 @@ export default function Calendar() {
           selectedHabitIndex
         ]
 
+  const weeklyDays =
+    createWeekDays(
+      selectedDay.date,
+      today,
+      selectedHabitIndex
+    )
+
   const visibleMonthLabel =
     capitalizeFirstLetter(
       new Intl.DateTimeFormat(
@@ -524,6 +620,32 @@ export default function Calendar() {
         new Date(
           nextMonth.getFullYear(),
           nextMonth.getMonth(),
+          1
+        )
+      )
+    }
+  }
+
+  /*
+    När användaren klickar på en dag
+    i veckovyn uppdateras även månaden
+    om dagen ligger i en annan månad.
+  */
+  function selectWeekDate(
+    date: Date
+  ) {
+    setSelectedDate(date)
+
+    if (
+      !sameMonth(
+        date,
+        visibleMonth
+      )
+    ) {
+      setVisibleMonth(
+        new Date(
+          date.getFullYear(),
+          date.getMonth(),
           1
         )
       )
@@ -620,9 +742,6 @@ export default function Calendar() {
         100
     )
 
-  /*
-    NY STREAK-LOGIK
-  */
   const selectedStreak =
     calculateStreak(
       selectedDay.date,
@@ -802,7 +921,7 @@ export default function Calendar() {
         </div>
       </section>
 
-      {/* KALENDER */}
+      {/* MÅNADSKALENDER */}
 
       <section className="overflow-hidden rounded-[10px] border bg-card">
         <div className="grid grid-cols-7 border-b">
@@ -893,6 +1012,25 @@ export default function Calendar() {
           )}
         </div>
       </section>
+
+      {/* VECKOVY */}
+
+      <div className="mt-5">
+        <WeeklyHabitView
+          days={weeklyDays}
+          selectedDate={
+            selectedDay.date
+          }
+          onSelectDate={
+            selectWeekDate
+          }
+          habitLabel={
+            selectedHabit
+              ? selectedHabit.name
+              : "Alla vanor"
+          }
+        />
+      </div>
 
       {/* VALD DAG */}
 
@@ -999,7 +1137,8 @@ export default function Calendar() {
                 key={habit.id}
                 className="flex items-center gap-3 border-t px-5 py-3"
                 style={{
-                  borderLeft: `3px solid ${habit.color}`,
+                  borderLeft:
+                    `3px solid ${habit.color}`,
                 }}
               >
                 <div
