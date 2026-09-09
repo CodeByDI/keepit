@@ -91,7 +91,7 @@ export function NavUser() {
   }
 
   const handleSettings = () => {
-    navigate("/inställningar")
+    navigate("/settings")
   }
 
   // ─── Get initials ──────────────────────────────────
