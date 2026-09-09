@@ -20,6 +20,14 @@ import {
   type WeeklyHabitDay,
 } from "@/components/weekly-habit-view"
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+
 type CalendarDay = {
   date: Date
   day: number
@@ -32,7 +40,15 @@ type CalendarDay = {
 
 const TOTAL_HABITS = 5
 
-const weekdays = ["M", "T", "O", "T", "F", "L", "S"]
+const weekdays = [
+  "M",
+  "T",
+  "O",
+  "T",
+  "F",
+  "L",
+  "S",
+]
 
 const habits = [
   {
@@ -41,7 +57,8 @@ const habits = [
     time: "Dagligen · 07:00",
     icon: PersonSimpleRun,
     color: "var(--chart-1)",
-    background: "rgba(109, 92, 246, 0.12)",
+    background:
+      "rgba(109, 92, 246, 0.12)",
   },
   {
     id: "training",
@@ -49,7 +66,8 @@ const habits = [
     time: "Dagligen · 17:30",
     icon: Barbell,
     color: "var(--chart-2)",
-    background: "rgba(139, 92, 246, 0.12)",
+    background:
+      "rgba(139, 92, 246, 0.12)",
   },
   {
     id: "water",
@@ -57,7 +75,8 @@ const habits = [
     time: "Dagligen · 20:00",
     icon: Drop,
     color: "var(--chart-3)",
-    background: "rgba(168, 155, 250, 0.12)",
+    background:
+      "rgba(168, 155, 250, 0.12)",
   },
   {
     id: "reading",
@@ -65,7 +84,8 @@ const habits = [
     time: "Dagligen · 21:00",
     icon: BookOpen,
     color: "var(--chart-4)",
-    background: "rgba(192, 132, 252, 0.12)",
+    background:
+      "rgba(192, 132, 252, 0.12)",
   },
   {
     id: "coding",
@@ -73,20 +93,25 @@ const habits = [
     time: "Dagligen · 20:00",
     icon: Code,
     color: "var(--chart-5)",
-    background: "rgba(244, 114, 182, 0.12)",
+    background:
+      "rgba(244, 114, 182, 0.12)",
   },
 ] as const
 
-type HabitId = (typeof habits)[number]["id"]
+type HabitId =
+  (typeof habits)[number]["id"]
 
 function sameDate(
   first: Date,
   second: Date
 ) {
   return (
-    first.getFullYear() === second.getFullYear() &&
-    first.getMonth() === second.getMonth() &&
-    first.getDate() === second.getDate()
+    first.getFullYear() ===
+      second.getFullYear() &&
+    first.getMonth() ===
+      second.getMonth() &&
+    first.getDate() ===
+      second.getDate()
   )
 }
 
@@ -95,12 +120,16 @@ function sameMonth(
   second: Date
 ) {
   return (
-    first.getFullYear() === second.getFullYear() &&
-    first.getMonth() === second.getMonth()
+    first.getFullYear() ===
+      second.getFullYear() &&
+    first.getMonth() ===
+      second.getMonth()
   )
 }
 
-function normalizeDate(date: Date) {
+function normalizeDate(
+  date: Date
+) {
   return new Date(
     date.getFullYear(),
     date.getMonth(),
@@ -108,19 +137,24 @@ function normalizeDate(date: Date) {
   )
 }
 
-/*
-  Tillfällig exempeldata.
-
-  Funktionen bestämmer hur många av
-  dagens fem vanor som är genomförda.
-*/
 function getMockCompleted(
   date: Date
 ) {
-  const pattern = [5, 5, 4, 5, 3, 5, 4]
+  const pattern = [
+    5,
+    5,
+    4,
+    5,
+    3,
+    5,
+    4,
+  ]
 
-  const day = date.getDate()
-  const month = date.getMonth()
+  const day =
+    date.getDate()
+
+  const month =
+    date.getMonth()
 
   return pattern[
     (day + month - 1) %
@@ -128,10 +162,6 @@ function getMockCompleted(
   ]
 }
 
-/*
-  Kontrollerar om en viss vana
-  genomfördes på ett visst datum.
-*/
 function isHabitCompletedOnDate(
   date: Date,
   habitIndex: number
@@ -139,52 +169,48 @@ function isHabitCompletedOnDate(
   const completed =
     getMockCompleted(date)
 
-  return habitIndex < completed
+  return (
+    habitIndex <
+    completed
+  )
 }
 
-/*
-  Kontrollerar om dagen räknas som
-  genomförd för streak.
-
-  Om "Alla vanor" är valt måste alla
-  fem vanor vara klara.
-
-  Om en specifik vana är vald behöver
-  bara den vanan vara genomförd.
-*/
 function isDayCompletedForStreak(
   date: Date,
-  selectedHabitIndex: number | null
+  selectedHabitIndex:
+    | number
+    | null
 ) {
   const completed =
     getMockCompleted(date)
 
-  if (selectedHabitIndex === null) {
-    return completed === TOTAL_HABITS
+  if (
+    selectedHabitIndex ===
+    null
+  ) {
+    return (
+      completed ===
+      TOTAL_HABITS
+    )
   }
 
-  return selectedHabitIndex < completed
+  return (
+    selectedHabitIndex <
+    completed
+  )
 }
 
-/*
-  Räknar streak bakåt från vald dag.
-
-  Exempel:
-  fredag = klar
-  torsdag = klar
-  onsdag = missad
-
-  streak = 2
-
-  Om vald dag är missad blir streak = 0.
-*/
 function calculateStreak(
   selectedDate: Date,
-  selectedHabitIndex: number | null,
+  selectedHabitIndex:
+    | number
+    | null,
   today: Date
 ) {
   const normalizedSelectedDate =
-    normalizeDate(selectedDate)
+    normalizeDate(
+      selectedDate
+    )
 
   const normalizedToday =
     normalizeDate(today)
@@ -199,11 +225,10 @@ function calculateStreak(
   let streak = 0
 
   const dateToCheck =
-    new Date(normalizedSelectedDate)
+    new Date(
+      normalizedSelectedDate
+    )
 
-  /*
-    Säkerhetsgräns på 365 dagar.
-  */
   for (
     let index = 0;
     index < 365;
@@ -222,7 +247,8 @@ function calculateStreak(
     streak++
 
     dateToCheck.setDate(
-      dateToCheck.getDate() - 1
+      dateToCheck.getDate() -
+        1
     )
   }
 
@@ -243,44 +269,46 @@ function createCalendarDays(
     normalizeDate(today)
 
   const firstDayOfMonth =
-    new Date(year, month, 1)
+    new Date(
+      year,
+      month,
+      1
+    )
 
-  /*
-    JavaScript:
-    söndag = 0
-
-    Vi gör måndag till första dagen.
-  */
   const mondayOffset =
-    (firstDayOfMonth.getDay() + 6) %
-    7
+    (
+      firstDayOfMonth.getDay() +
+      6
+    ) % 7
 
-  const gridStart = new Date(
-    year,
-    month,
-    1 - mondayOffset
-  )
+  const gridStart =
+    new Date(
+      year,
+      month,
+      1 - mondayOffset
+    )
 
-  const calendarDays: CalendarDay[] =
-    []
+  const calendarDays:
+    CalendarDay[] = []
 
-  /*
-    6 veckor × 7 dagar = 42 celler
-  */
   for (
     let index = 0;
     index < 42;
     index++
   ) {
-    const date = new Date(
-      gridStart.getFullYear(),
-      gridStart.getMonth(),
-      gridStart.getDate() + index
-    )
+    const date =
+      new Date(
+        gridStart.getFullYear(),
+        gridStart.getMonth(),
+        gridStart.getDate() +
+          index
+      )
 
     const currentMonth =
-      date.getFullYear() === year &&
-      date.getMonth() === month
+      date.getFullYear() ===
+        year &&
+      date.getMonth() ===
+        month
 
     const isToday =
       sameDate(
@@ -293,16 +321,21 @@ function createCalendarDays(
       normalizedToday.getTime()
 
     const completed =
-      currentMonth && !future
-        ? getMockCompleted(date)
+      currentMonth &&
+      !future
+        ? getMockCompleted(
+            date
+          )
         : 0
 
     calendarDays.push({
       date,
-      day: date.getDate(),
+      day:
+        date.getDate(),
       currentMonth,
       completed,
-      total: TOTAL_HABITS,
+      total:
+        TOTAL_HABITS,
       future,
       isToday,
     })
@@ -311,66 +344,63 @@ function createCalendarDays(
   return calendarDays
 }
 
-/*
-  Skapar veckans sju dagar
-  från måndag till söndag.
-
-  Veckan utgår från den dag
-  användaren har valt.
-*/
 function createWeekDays(
   referenceDate: Date,
   today: Date,
-  selectedHabitIndex: number | null
+  selectedHabitIndex:
+    | number
+    | null
 ): WeeklyHabitDay[] {
   const normalizedReferenceDate =
-    normalizeDate(referenceDate)
+    normalizeDate(
+      referenceDate
+    )
 
   const normalizedToday =
     normalizeDate(today)
 
-  /*
-    getDay:
-    söndag = 0
-    måndag = 1
-
-    Vi ändrar så att:
-    måndag = 0
-    söndag = 6
-  */
   const dayOffset =
-    (normalizedReferenceDate.getDay() + 6) %
-    7
+    (
+      normalizedReferenceDate.getDay() +
+      6
+    ) % 7
 
-  const monday = new Date(
-    normalizedReferenceDate.getFullYear(),
-    normalizedReferenceDate.getMonth(),
-    normalizedReferenceDate.getDate() -
-      dayOffset
-  )
+  const monday =
+    new Date(
+      normalizedReferenceDate.getFullYear(),
+      normalizedReferenceDate.getMonth(),
+      normalizedReferenceDate.getDate() -
+        dayOffset
+    )
 
   return Array.from(
     { length: 7 },
     (_, index) => {
-      const date = new Date(
-        monday.getFullYear(),
-        monday.getMonth(),
-        monday.getDate() + index
-      )
+      const date =
+        new Date(
+          monday.getFullYear(),
+          monday.getMonth(),
+          monday.getDate() +
+            index
+        )
 
       const future =
         date.getTime() >
         normalizedToday.getTime()
 
       let completed = 0
-      let total = TOTAL_HABITS
+      let total =
+        TOTAL_HABITS
 
       if (!future) {
         if (
-          selectedHabitIndex === null
+          selectedHabitIndex ===
+          null
         ) {
           completed =
-            getMockCompleted(date)
+            getMockCompleted(
+              date
+            )
         } else {
           total = 1
 
@@ -383,7 +413,8 @@ function createWeekDays(
               : 0
         }
       } else if (
-        selectedHabitIndex !== null
+        selectedHabitIndex !==
+        null
       ) {
         total = 1
       }
@@ -393,10 +424,11 @@ function createWeekDays(
         completed,
         total,
         future,
-        isToday: sameDate(
-          date,
-          normalizedToday
-        ),
+        isToday:
+          sameDate(
+            date,
+            normalizedToday
+          ),
       }
     }
   )
@@ -406,7 +438,9 @@ function capitalizeFirstLetter(
   value: string
 ) {
   return (
-    value.charAt(0).toUpperCase() +
+    value
+      .charAt(0)
+      .toUpperCase() +
     value.slice(1)
   )
 }
@@ -416,7 +450,9 @@ function ProgressRing({
   selectedHabitIndex,
 }: {
   completed: number
-  selectedHabitIndex: number | null
+  selectedHabitIndex:
+    | number
+    | null
 }) {
   const colors = [
     "var(--chart-1)",
@@ -427,10 +463,12 @@ function ProgressRing({
   ]
 
   if (
-    selectedHabitIndex !== null
+    selectedHabitIndex !==
+    null
   ) {
     const habitCompleted =
-      selectedHabitIndex < completed
+      selectedHabitIndex <
+      completed
 
     return (
       <div
@@ -449,19 +487,29 @@ function ProgressRing({
     )
   }
 
-  const segments = colors
-    .map((color, index) => {
-      const start = index * 72
-      const end = start + 72
+  const segments =
+    colors
+      .map(
+        (
+          color,
+          index
+        ) => {
+          const start =
+            index * 72
 
-      const segmentColor =
-        index < completed
-          ? color
-          : "var(--muted)"
+          const end =
+            start + 72
 
-      return `${segmentColor} ${start}deg ${end}deg`
-    })
-    .join(", ")
+          const segmentColor =
+            index <
+            completed
+              ? color
+              : "var(--muted)"
+
+          return `${segmentColor} ${start}deg ${end}deg`
+        }
+      )
+      .join(", ")
 
   return (
     <div
@@ -477,7 +525,8 @@ function ProgressRing({
 }
 
 export default function Calendar() {
-  const today = new Date()
+  const today =
+    new Date()
 
   const normalizedToday =
     normalizeDate(today)
@@ -520,18 +569,21 @@ export default function Calendar() {
     )
 
   const selectedDay =
-    calendarDays.find((date) =>
-      sameDate(
-        date.date,
-        selectedDate
-      )
+    calendarDays.find(
+      (date) =>
+        sameDate(
+          date.date,
+          selectedDate
+        )
     ) ??
     calendarDays.find(
-      (date) => date.currentMonth
+      (date) =>
+        date.currentMonth
     )!
 
   const selectedHabitIndex =
-    selectedHabitId === "all"
+    selectedHabitId ===
+    "all"
       ? null
       : habits.findIndex(
           (habit) =>
@@ -540,7 +592,8 @@ export default function Calendar() {
         )
 
   const selectedHabit =
-    selectedHabitIndex === null
+    selectedHabitIndex ===
+    null
       ? null
       : habits[
           selectedHabitIndex
@@ -561,7 +614,9 @@ export default function Calendar() {
           month: "long",
           year: "numeric",
         }
-      ).format(visibleMonth)
+      ).format(
+        visibleMonth
+      )
     )
 
   const selectedDateLabel =
@@ -569,11 +624,15 @@ export default function Calendar() {
       new Intl.DateTimeFormat(
         "sv-SE",
         {
-          weekday: "long",
+          weekday:
+            "long",
           day: "numeric",
-          month: "long",
+          month:
+            "long",
         }
-      ).format(selectedDay.date)
+      ).format(
+        selectedDay.date
+      )
     )
 
   const canGoNext =
@@ -593,10 +652,6 @@ export default function Calendar() {
         1
       )
 
-    /*
-      Tillåt inte navigation längre
-      fram än aktuell månad.
-    */
     if (
       nextMonth.getTime() >
       currentMonth.getTime()
@@ -604,7 +659,9 @@ export default function Calendar() {
       return
     }
 
-    setVisibleMonth(nextMonth)
+    setVisibleMonth(
+      nextMonth
+    )
 
     if (
       sameMonth(
@@ -626,15 +683,12 @@ export default function Calendar() {
     }
   }
 
-  /*
-    När användaren klickar på en dag
-    i veckovyn uppdateras även månaden
-    om dagen ligger i en annan månad.
-  */
   function selectWeekDate(
     date: Date
   ) {
-    setSelectedDate(date)
+    setSelectedDate(
+      date
+    )
 
     if (
       !sameMonth(
@@ -659,11 +713,15 @@ export default function Calendar() {
         !date.future
     )
 
-  let monthPercentage = 0
-  let monthResultText = ""
+  let monthPercentage =
+    0
+
+  let monthResultText =
+    ""
 
   if (
-    selectedHabitIndex === null
+    selectedHabitIndex ===
+    null
   ) {
     const fullyCompletedDays =
       elapsedDays.filter(
@@ -674,7 +732,10 @@ export default function Calendar() {
 
     const totalCompletedHabits =
       elapsedDays.reduce(
-        (sum, date) =>
+        (
+          sum,
+          date
+        ) =>
           sum +
           date.completed,
         0
@@ -685,10 +746,13 @@ export default function Calendar() {
       TOTAL_HABITS
 
     monthPercentage =
-      totalPossibleHabits > 0
+      totalPossibleHabits >
+      0
         ? Math.round(
-            (totalCompletedHabits /
-              totalPossibleHabits) *
+            (
+              totalCompletedHabits /
+              totalPossibleHabits
+            ) *
               100
           )
         : 0
@@ -706,10 +770,13 @@ export default function Calendar() {
       ).length
 
     monthPercentage =
-      elapsedDays.length > 0
+      elapsedDays.length >
+      0
         ? Math.round(
-            (completedHabitDays /
-              elapsedDays.length) *
+            (
+              completedHabitDays /
+              elapsedDays.length
+            ) *
               100
           )
         : 0
@@ -719,7 +786,8 @@ export default function Calendar() {
   }
 
   const selectedDayCompleted =
-    selectedHabitIndex === null
+    selectedHabitIndex ===
+    null
       ? selectedDay.completed
       : selectedDay.future
         ? 0
@@ -731,14 +799,17 @@ export default function Calendar() {
           : 0
 
   const selectedDayTotal =
-    selectedHabitIndex === null
+    selectedHabitIndex ===
+    null
       ? selectedDay.total
       : 1
 
   const completionPercentage =
     Math.round(
-      (selectedDayCompleted /
-        selectedDayTotal) *
+      (
+        selectedDayCompleted /
+        selectedDayTotal
+      ) *
         100
     )
 
@@ -756,8 +827,6 @@ export default function Calendar() {
 
   return (
     <div className="w-full max-w-[900px]">
-      {/* HEADER */}
-
       <header className="mb-6 border-b pb-5">
         <div className="flex items-end justify-between gap-4">
           <div>
@@ -766,18 +835,20 @@ export default function Calendar() {
             </h1>
 
             <p className="mt-1 text-xs text-muted-foreground">
-              {visibleMonthLabel}
+              {
+                visibleMonthLabel
+              }
             </p>
           </div>
 
           <div className="flex items-end gap-3">
-            {/* MÅNADSNAVIGATION */}
-
             <div className="flex gap-1">
               <button
                 type="button"
                 onClick={() =>
-                  changeMonth(-1)
+                  changeMonth(
+                    -1
+                  )
                 }
                 className="flex h-8 w-8 items-center justify-center rounded-md border text-muted-foreground transition hover:bg-muted hover:text-foreground"
                 aria-label="Föregående månad"
@@ -791,15 +862,21 @@ export default function Calendar() {
               <button
                 type="button"
                 onClick={() =>
-                  changeMonth(1)
+                  changeMonth(
+                    1
+                  )
                 }
-                disabled={!canGoNext}
+                disabled={
+                  !canGoNext
+                }
                 className={[
                   "flex h-8 w-8 items-center justify-center rounded-md border transition",
                   canGoNext
                     ? "text-muted-foreground hover:bg-muted hover:text-foreground"
                     : "cursor-not-allowed opacity-30",
-                ].join(" ")}
+                ].join(
+                  " "
+                )}
                 aria-label="Nästa månad"
                 title="Nästa månad"
               >
@@ -809,58 +886,67 @@ export default function Calendar() {
               </button>
             </div>
 
-            {/* VANEFILTER */}
-
             <div className="flex flex-col gap-1">
               <label
-                htmlFor="habit-filter"
                 className="text-[9px] font-semibold uppercase tracking-[0.08em] text-muted-foreground"
               >
                 Visa vana
               </label>
 
-              <select
-                id="habit-filter"
+              <Select
                 value={
                   selectedHabitId
                 }
-                onChange={(event) =>
+                onValueChange={(
+                  value
+                ) =>
                   setSelectedHabitId(
-                    event.target
-                      .value as
+                    value as
                       | "all"
                       | HabitId
                   )
                 }
-                className="h-8 min-w-[170px] rounded-md border bg-background px-2 text-xs text-foreground outline-none transition focus:border-primary"
               >
-                <option value="all">
-                  Alla vanor
-                </option>
+                <SelectTrigger
+                  className="min-w-[170px] text-xs"
+                  aria-label="Visa vana"
+                >
+                  <SelectValue />
+                </SelectTrigger>
 
-                {habits.map(
-                  (habit) => (
-                    <option
-                      key={
-                        habit.id
-                      }
-                      value={
-                        habit.id
-                      }
-                    >
-                      {
-                        habit.name
-                      }
-                    </option>
-                  )
-                )}
-              </select>
+                <SelectContent
+                  align="start"
+                >
+                  <SelectItem
+                    value="all"
+                  >
+                    Alla vanor
+                  </SelectItem>
+
+                  {habits.map(
+                    (
+                      habit
+                    ) => (
+                      <SelectItem
+                        key={
+                          habit.id
+                        }
+                        value={
+                          habit.id
+                        }
+                      >
+                        {
+                          habit.name
+                        }
+                      </SelectItem>
+                    )
+                  )}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
       </header>
-
-      {/* MÅNADSRESULTAT */}
 
       <section
         className="mb-5 overflow-hidden rounded-[10px] border border-primary p-5"
@@ -877,7 +963,9 @@ export default function Calendar() {
 
             <div className="mt-2 flex items-end gap-2">
               <span className="text-[30px] font-extrabold leading-none tracking-[-0.04em]">
-                {monthPercentage}
+                {
+                  monthPercentage
+                }
               </span>
 
               <span className="mb-[2px] text-xs">
@@ -886,7 +974,9 @@ export default function Calendar() {
             </div>
 
             <p className="mt-2 text-xs text-muted-foreground">
-              {monthResultText}
+              {
+                monthResultText
+              }
             </p>
           </div>
 
@@ -899,9 +989,13 @@ export default function Calendar() {
 
             <div className="space-y-[3px]">
               {visibleHabits.map(
-                (habit) => (
+                (
+                  habit
+                ) => (
                   <div
-                    key={habit.id}
+                    key={
+                      habit.id
+                    }
                     className="flex items-center gap-[7px] text-[10px] text-muted-foreground"
                   >
                     <span
@@ -912,7 +1006,9 @@ export default function Calendar() {
                       }}
                     />
 
-                    {habit.name}
+                    {
+                      habit.name
+                    }
                   </div>
                 )
               )}
@@ -920,8 +1016,6 @@ export default function Calendar() {
           </div>
         </div>
       </section>
-
-      {/* MÅNADSKALENDER */}
 
       <section className="overflow-hidden rounded-[10px] border bg-card">
         <div className="grid grid-cols-7 border-b">
@@ -934,7 +1028,9 @@ export default function Calendar() {
                 key={`${weekday}-${index}`}
                 className="py-[10px] text-center text-[10px] font-medium tracking-[0.05em] text-muted-foreground"
               >
-                {weekday}
+                {
+                  weekday
+                }
               </div>
             )
           )}
@@ -942,7 +1038,9 @@ export default function Calendar() {
 
         <div className="grid grid-cols-7">
           {calendarDays.map(
-            (date) => {
+            (
+              date
+            ) => {
               const isSelected =
                 sameDate(
                   selectedDay.date,
@@ -966,19 +1064,18 @@ export default function Calendar() {
                   className={[
                     "flex min-h-[72px] flex-col items-center justify-center gap-[6px]",
                     "border-b border-r px-2 py-3 text-[10px] transition",
-
                     date.currentMonth
                       ? "cursor-pointer hover:bg-muted/40"
                       : "cursor-default opacity-25",
-
                     date.isToday
                       ? "bg-primary/[0.06]"
                       : "",
-
                     isSelected
                       ? "ring-1 ring-inset ring-primary/40"
                       : "",
-                  ].join(" ")}
+                  ].join(
+                    " "
+                  )}
                 >
                   <span
                     className={
@@ -987,7 +1084,9 @@ export default function Calendar() {
                         : "text-foreground"
                     }
                   >
-                    {date.day}
+                    {
+                      date.day
+                    }
                   </span>
 
                   <div
@@ -1013,11 +1112,11 @@ export default function Calendar() {
         </div>
       </section>
 
-      {/* VECKOVY */}
-
       <div className="mt-5">
         <WeeklyHabitView
-          days={weeklyDays}
+          days={
+            weeklyDays
+          }
           selectedDate={
             selectedDay.date
           }
@@ -1032,8 +1131,6 @@ export default function Calendar() {
         />
       </div>
 
-      {/* VALD DAG */}
-
       <section className="mt-5 overflow-hidden rounded-[10px] border bg-card">
         <div className="flex items-center gap-4 border-b px-5 py-4">
           <div
@@ -1047,14 +1144,19 @@ export default function Calendar() {
           >
             <div className="flex h-full w-full items-center justify-center rounded-full bg-card">
               <span className="text-sm font-bold">
-                {completionPercentage}%
+                {
+                  completionPercentage
+                }
+                %
               </span>
             </div>
           </div>
 
           <div className="flex-1">
             <h3 className="text-xs font-semibold">
-              {selectedDateLabel}
+              {
+                selectedDateLabel
+              }
             </h3>
 
             <div className="mt-2 flex flex-wrap gap-2">
@@ -1088,7 +1190,9 @@ export default function Calendar() {
                 />
 
                 Streak{" "}
-                {selectedStreak}
+                {
+                  selectedStreak
+                }
               </span>
 
               <span className="flex items-center gap-1 rounded-full border bg-muted px-2 py-1 text-[9px]">
@@ -1114,13 +1218,17 @@ export default function Calendar() {
         </div>
 
         {visibleHabits.map(
-          (habit) => {
+          (
+            habit
+          ) => {
             const Icon =
               habit.icon
 
             const habitIndex =
               habits.findIndex(
-                (item) =>
+                (
+                  item
+                ) =>
                   item.id ===
                   habit.id
               )
@@ -1134,7 +1242,9 @@ export default function Calendar() {
 
             return (
               <div
-                key={habit.id}
+                key={
+                  habit.id
+                }
                 className="flex items-center gap-3 border-t px-5 py-3"
                 style={{
                   borderLeft:
@@ -1164,7 +1274,9 @@ export default function Calendar() {
                       completed
                         ? "text-muted-foreground"
                         : "",
-                    ].join(" ")}
+                    ].join(
+                      " "
+                    )}
                   >
                     {
                       habit.name
