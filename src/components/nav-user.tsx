@@ -1,4 +1,5 @@
 // src/components/nav-user.tsx
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -18,17 +19,57 @@ import {
 } from "@/components/ui/sidebar"
 import { UserIcon, GearIcon, SignOutIcon, CaretUpDownIcon } from "@phosphor-icons/react"
 
-export function NavUser({
-  user,
-}: {
-  user: { name: string; email: string; avatar: string }
-}) {
+// ─── Default user ─────────────────────────────────────────────────────
+const defaultUser = {
+  name: "Maja L.",
+  email: "maja@example.com",
+  avatar: "/avatars/maja.jpg",
+}
+
+export function NavUser() {
   const { isMobile } = useSidebar()
   const navigate = useNavigate()
 
+  // ─── State ──────────────────────────────────────────
+  const [user, setUser] = useState(defaultUser)
+
+  // ─── Load user from localStorage on mount ──────────
+  useEffect(() => {
+    const loadUser = () => {
+      const stored = localStorage.getItem("user")
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored)
+          setUser({
+            name: parsed.name || defaultUser.name,
+            email: parsed.email || defaultUser.email,
+            avatar: defaultUser.avatar,
+          })
+        } catch {
+          setUser(defaultUser)
+        }
+      } else {
+        setUser(defaultUser)
+      }
+    }
+
+    loadUser()
+
+    // Listen for storage changes (when profile is updated)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "user") {
+        loadUser()
+      }
+    }
+
+    window.addEventListener("storage", handleStorageChange)
+    return () => window.removeEventListener("storage", handleStorageChange)
+  }, [])
+
   // ─── Handlers ──────────────────────────────────────
   const handleLogout = () => {
-    localStorage.removeItem("user")
+    // ✅ Only remove login session, keep user data
+    localStorage.removeItem("isLoggedIn")
     navigate("/login")
   }
 
@@ -40,6 +81,17 @@ export function NavUser({
     navigate("/inställningar")
   }
 
+  // ─── Get initials ──────────────────────────────────
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((word) => word[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2)
+  }
+
+  // ─── Render ──────────────────────────────────────
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -51,7 +103,7 @@ export function NavUser({
             <Avatar className="size-8">
               <AvatarImage src={user.avatar} alt={user.name} />
               <AvatarFallback className="bg-primary text-[10px] text-primary-foreground">
-                ML
+                {getInitials(user.name)}
               </AvatarFallback>
             </Avatar>
             <div className="grid flex-1 text-left text-sm leading-tight">
@@ -73,7 +125,7 @@ export function NavUser({
                   <Avatar className="size-8">
                     <AvatarImage src={user.avatar} alt={user.name} />
                     <AvatarFallback className="bg-primary text-[10px] text-primary-foreground">
-                      ML
+                      {getInitials(user.name)}
                     </AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
