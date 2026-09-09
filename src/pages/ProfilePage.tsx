@@ -11,25 +11,76 @@ import {
   SignOutIcon,
   PencilSimpleIcon,
   CaretRightIcon,
-  FireIcon,
 } from "@phosphor-icons/react"
 import { useNavigate } from "react-router-dom"
+import { EditProfileDialog } from "@/components/edit-profile-dialog"
 
-// ─── Static user data ─────────────────────────────────────────────────────
-const user = {
+// ─── Default user data ─────────────────────────────────────────────────────
+const defaultUser = {
   name: "Maja Lindström",
-  email: "maja@example.com",
+  email: "maja@example.se",
   memberSince: "aug 2026",
   streak: 12,
   habits: 5,
   avatar: "ML",
+  password: "MajaÄrBäst123",
 }
 
 // ─── Profile Page ─────────────────────────────────────────────────────────
 export function ProfilePage() {
   const navigate = useNavigate()
+  const [isLogoutHovered, setIsLogoutHovered] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+
+  // ─── User state (from localStorage) ──
+  const [user, setUser] = useState(() => {
+    const stored = localStorage.getItem("user")
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored)
+        console.log("🔍 ProfilePage - Loaded user:", parsed)
+        return {
+          ...defaultUser,
+          name: parsed.name || defaultUser.name,
+          email: parsed.email || defaultUser.email,
+          password: parsed.password || defaultUser.password,
+          memberSince: parsed.memberSince || defaultUser.memberSince,
+        }
+      } catch {
+        console.error("❌ ProfilePage - Error parsing user:", stored)
+        return defaultUser
+      }
+    }
+    console.log("ℹ️ ProfilePage - No user in localStorage, using default")
+    return defaultUser
+  })
+
+  // ─── Update user in localStorage ──
+  const handleSaveProfile = (data: { name: string; email: string; password?: string }) => {
+    console.log("📝 ProfilePage - Saving profile:", data)
+
+    const updatedUser = {
+      ...user,
+      name: data.name,
+      email: data.email,
+    }
+
+    // If password is provided, store it
+    if (data.password) {
+      updatedUser.password = data.password
+      console.log("🔑 ProfilePage - New password saved:", data.password)
+    }
+
+    // Save to localStorage
+    localStorage.setItem("user", JSON.stringify(updatedUser))
+    console.log("✅ ProfilePage - User saved to localStorage:", updatedUser)
+
+    // Update state
+    setUser(updatedUser)
+  }
 
   const handleLogout = () => {
+    console.log("🚪 ProfilePage - Logging out")
     localStorage.removeItem("user")
     navigate("/login")
   }
@@ -65,7 +116,8 @@ export function ProfilePage() {
           <Button
             variant="ghost"
             size="sm"
-            className="text-muted-foreground opacity-60 hover:opacity-100 transition-opacity cursor-pointer "
+            className="text-muted-foreground opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
+            onClick={() => setIsEditDialogOpen(true)}
           >
             <PencilSimpleIcon size={14} className="mr-1" />
             Redigera
@@ -102,13 +154,13 @@ export function ProfilePage() {
                   color: "var(--primary)",
                 }}
               >
-                {user.avatar}
+                {user.avatar || user.name.split(" ").map((n: string) => n[0]).join("")}
               </div>
             </div>
 
             <div className="text-center relative z-10">
               <div className="font-semibold text-foreground">{user.name}</div>
-              <div className="text-xs text-muted-foreground">{user.email}</div>
+              <div className="text-sm text-muted-foreground">{user.email}</div>
               <div className="text-xs text-muted-foreground/60 mt-1">Aktiv sedan {user.memberSince}</div>
             </div>
 
@@ -146,23 +198,23 @@ export function ProfilePage() {
                 Aktiva vanor
               </div>
               <div className="flex flex-col gap-1.5">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <span className="w-2 h-2 rounded-full" style={{ background: "var(--chart-1)" }} />
                   Morgonlöpning
                 </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <span className="w-2 h-2 rounded-full" style={{ background: "var(--chart-2)" }} />
                   Träna 30 min
                 </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <span className="w-2 h-2 rounded-full" style={{ background: "var(--chart-3)" }} />
                   Drick 2L vatten
                 </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <span className="w-2 h-2 rounded-full" style={{ background: "var(--chart-4)" }} />
                   Läs 20 sidor
                 </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <span className="w-2 h-2 rounded-full" style={{ background: "var(--chart-5)" }} />
                   Koda
                 </div>
@@ -190,7 +242,6 @@ export function ProfilePage() {
                     Längsta streak
                   </div>
                   <div className="text-2xl font-bold mt-1" style={{ color: "var(--primary)" }}>
-                    {/* 28 🔥 */}
                     28
                   </div>
                   <div className="text-xs text-muted-foreground/60 mt-1">Ditt rekord</div>
@@ -269,14 +320,17 @@ export function ProfilePage() {
               </div>
             </div>
 
+            {/* ── Logout Button ── */}
             <button
               onClick={handleLogout}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-300 w-full cursor-pointer hover:bg-red-500/3! hover:border-red-500/20! hover:text-red-500"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-300 w-full cursor-pointer"
               style={{
-                background: "var(--card)",
-                borderColor: "var(--border)",
+                background: isLogoutHovered ? "rgba(239, 68, 68, 0.08)" : "var(--card)",
+                borderColor: isLogoutHovered ? "rgba(239, 68, 68, 0.15)" : "var(--border)",
                 color: "var(--red)",
               }}
+              onMouseEnter={() => setIsLogoutHovered(true)}
+              onMouseLeave={() => setIsLogoutHovered(false)}
             >
               <SignOutIcon size={16} className="opacity-60" />
               <span className="text-sm font-medium">Logga ut</span>
@@ -284,6 +338,15 @@ export function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* ── Edit Profile Dialog ── */}
+      <EditProfileDialog
+        open={isEditDialogOpen}
+        onClose={() => setIsEditDialogOpen(false)}
+        onSave={handleSaveProfile}
+        currentName={user.name}
+        currentEmail={user.email}
+      />
     </>
   )
 }

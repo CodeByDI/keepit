@@ -31,8 +31,8 @@ export function LoginForm({
     ...props
 }: React.ComponentProps<"div">) {
     // ─── State ──────────────────────────────────────
-    const [email, setEmail] = useState("maja@example.com")
-    const [password, setPassword] = useState("MajaÄrBäst123")
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
     const [error, setError] = useState<string | null>(null)
     const [isLoading, setIsLoading] = useState(false)
     const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -54,20 +54,84 @@ export function LoginForm({
         try {
             await new Promise(resolve => setTimeout(resolve, 1000))
 
-            if (email.includes("@") && password.length >= 1) {
-                localStorage.setItem("user", JSON.stringify({ email }))
+            // ─── Check if user exists in localStorage ──
+            const stored = localStorage.getItem("user")
+            console.log("📦 Raw localStorage user:", stored)
+
+            let storedUser = null
+            if (stored) {
+                try {
+                    storedUser = JSON.parse(stored)
+                    console.log("✅ Parsed stored user:", storedUser)
+                } catch (e) {
+                    console.error("❌ Failed to parse user:", e)
+                }
+            }
+
+            // ─── If NO user exists in localStorage ──
+            if (!storedUser) {
+                // Create a new account (first-time setup)
+                const newUser = {
+                    email: email.trim(),
+                    password: password.trim(),
+                    name: email.split('@')[0] || "Användare",
+                    memberSince: new Date().toLocaleDateString('sv-SE', { month: 'short', year: 'numeric' }),
+                }
+                localStorage.setItem("user", JSON.stringify(newUser))
+                localStorage.setItem("isLoggedIn", "true")
+                console.log("🆕 New user created:", newUser)
                 navigate("/")
+                setIsLoading(false)
+                return
+            }
+
+            // ─── User EXISTS - validate credentials ──
+            console.log("🔍 Validating credentials...")
+            console.log("📧 Entered email:", email.trim())
+            console.log("📧 Stored email:", storedUser.email)
+            console.log("🔑 Entered password:", password.trim())
+            console.log("🔑 Stored password:", storedUser.password)
+
+            const emailMatches = storedUser.email.toLowerCase() === email.trim().toLowerCase()
+            const passwordMatches = storedUser.password === password.trim()
+
+            console.log("📧 Email matches?", emailMatches)
+            console.log("🔑 Password matches?", passwordMatches)
+
+            if (emailMatches && passwordMatches) {
+                localStorage.setItem("isLoggedIn", "true")
+                console.log("✅ Login successful!")
+                navigate("/")
+            } else if (emailMatches && !passwordMatches) {
+                setError("❌ Fel lösenord. Försök igen.")
+                console.log("❌ Wrong password")
             } else {
-                setError("Ogiltig e-post eller lösenord")
+                setError("❌ Inget konto hittas med den e-postadressen")
+                console.log("❌ No account found for email:", email)
             }
         } catch (err) {
             setError("Något gick fel. Försök igen.")
+            console.error("❌ Login error:", err)
         } finally {
             setIsLoading(false)
         }
     }
 
-    // ─── Styles (matching NewHabitDialog) ──────────
+    // ─── Social Login ────────────────────────────────
+    const handleSocialLogin = (provider: "apple" | "google") => {
+        const fakeUser = {
+            email: `${provider}@example.com`,
+            password: "demo123",
+            name: provider === "google" ? "Google User" : "Apple User",
+            memberSince: new Date().toLocaleDateString('sv-SE', { month: 'short', year: 'numeric' }),
+        }
+        localStorage.setItem("user", JSON.stringify(fakeUser))
+        localStorage.setItem("isLoggedIn", "true")
+        console.log("✅ Social login:", provider, fakeUser)
+        navigate("/")
+    }
+
+    // ─── Styles ──────────────────────────────────────
     const labelClass = "text-xs font-normal uppercase tracking-widest text-muted-foreground opacity-60"
     const fieldClass =
         "w-full h-10 rounded-md border border-input bg-muted/40 px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
@@ -105,7 +169,7 @@ export function LoginForm({
                 <Button
                     variant="outline"
                     type="button"
-                    // onClick={() => alert("Google login kommer snart! 🚀")}
+                    onClick={() => handleSocialLogin("google")}
                     className="w-full h-10 justify-center text-sm font-medium"
                     style={{
                         background: "var(--login-card-bg)",

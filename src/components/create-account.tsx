@@ -45,7 +45,18 @@ export function CreateAccount({ open, onClose }: CreateAccountProps) {
       return
     }
 
-    console.log("Creating account:", { name, email, password })
+    // ─── Save user with password ────────────────────
+    const newUser = {
+      name: name.trim(),
+      email: email.trim(),
+      password: password,
+      memberSince: new Date().toLocaleDateString('sv-SE', { month: 'short', year: 'numeric' }),
+    }
+
+    localStorage.setItem("user", JSON.stringify(newUser))
+    localStorage.setItem("isLoggedIn", "true")
+
+    console.log("Account created:", { name, email })
     onClose()
   }
 
@@ -58,7 +69,7 @@ export function CreateAccount({ open, onClose }: CreateAccountProps) {
     onClose()
   }
 
-  // ─── Styles (matching NewHabitDialog) ──────────
+  // ─── Styles ──────────
   const labelClass = "text-xs font-normal uppercase tracking-widest text-muted-foreground opacity-60"
   const fieldClass =
     "w-full h-10 rounded-md border border-input bg-muted/40 px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
@@ -66,7 +77,14 @@ export function CreateAccount({ open, onClose }: CreateAccountProps) {
   // ─── Render ──────────────────────────────────────
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleCancel()}>
-      <DialogContent className="sm:max-w-md border-0 p-6">
+      <DialogContent
+        className="sm:max-w-md border-0 p-6"
+        style={{
+          background: `radial-gradient(ellipse 90% 70% at 100% 0%, rgba(109, 92, 246, 0.30) 0%, rgba(86, 73, 212, 0.10) 40%, transparent 65%), var(--card)`,
+          border: "1px solid rgba(109, 92, 246, 0.35)",
+          boxShadow: "0 4px 24px rgba(0,0,0,0.06)",
+        }}
+      >
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold tracking-tight" style={{ color: "var(--primary)" }}>
             Skapa konto
