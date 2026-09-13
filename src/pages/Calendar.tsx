@@ -27,6 +27,12 @@ import {
   SelectTrigger,
 } from "@/components/ui/select"
 
+import {
+  ensureHabitHistorySeeded,
+  getHabitCompletion,
+  type HabitCompletion,
+} from "@/lib/habit-storage"
+
 type CalendarDay = {
   date: Date
   day: number
@@ -52,6 +58,7 @@ const weekdays = [
 const habits = [
   {
     id: "running",
+    storageId: 3,
     name: "Morgonlöpning",
     time: "Dagligen · 07:00",
     icon: PersonSimpleRun,
@@ -60,6 +67,7 @@ const habits = [
   },
   {
     id: "training",
+    storageId: 4,
     name: "Träna 30 min",
     time: "Dagligen · 17:30",
     icon: Barbell,
@@ -68,6 +76,7 @@ const habits = [
   },
   {
     id: "water",
+    storageId: 5,
     name: "Drick 2L vatten",
     time: "Dagligen · 20:00",
     icon: Drop,
@@ -76,6 +85,7 @@ const habits = [
   },
   {
     id: "reading",
+    storageId: 1,
     name: "Läs 20 sidor",
     time: "Dagligen · 21:00",
     icon: BookOpen,
@@ -84,6 +94,7 @@ const habits = [
   },
   {
     id: "coding",
+    storageId: 2,
     name: "Koda",
     time: "Dagligen · 20:00",
     icon: Code,
@@ -95,71 +106,17 @@ const habits = [
 type HabitId =
   (typeof habits)[number]["id"]
 
-/*
-  Tillfällig mockhistorik.
-
-  true = genomförd
-  false = missad
-
-  När databasen kopplas in ersätts
-  den här delen med riktig historik.
-*/
-const HABIT_COMPLETION_PATTERNS = [
-  [
-    true,
-    true,
-    true,
-    true,
-    false,
-    true,
-    true,
-  ],
-  [
-    true,
-    true,
-    false,
-    true,
-    true,
-    true,
-    true,
-  ],
-  [
-    true,
-    true,
-    true,
-    true,
-    true,
-    false,
-    true,
-  ],
-  [
-    true,
-    false,
-    true,
-    true,
-    true,
-    true,
-    true,
-  ],
-  [
-    false,
-    true,
-    true,
-    false,
-    true,
-    true,
-    true,
-  ],
-] as const
-
 function sameDate(
   first: Date,
   second: Date
 ) {
   return (
-    first.getFullYear() === second.getFullYear() &&
-    first.getMonth() === second.getMonth() &&
-    first.getDate() === second.getDate()
+    first.getFullYear() ===
+      second.getFullYear() &&
+    first.getMonth() ===
+      second.getMonth() &&
+    first.getDate() ===
+      second.getDate()
   )
 }
 
@@ -168,8 +125,10 @@ function sameMonth(
   second: Date
 ) {
   return (
-    first.getFullYear() === second.getFullYear() &&
-    first.getMonth() === second.getMonth()
+    first.getFullYear() ===
+      second.getFullYear() &&
+    first.getMonth() ===
+      second.getMonth()
   )
 }
 
@@ -183,71 +142,27 @@ function normalizeDate(
   )
 }
 
-/*
-  Stabilt index 0–6.
-
-  Date.UTC används så sommartid inte
-  kan flytta mockhistoriken en dag.
-*/
-function getMockPatternIndex(
-  date: Date
-) {
-  const dateUtc =
-    Date.UTC(
-      date.getFullYear(),
-      date.getMonth(),
-      date.getDate()
-    )
-
-  const epochUtc =
-    Date.UTC(
-      2026,
-      0,
-      1
-    )
-
-  const millisecondsPerDay =
-    24 * 60 * 60 * 1000
-
-  const dayDifference =
-    Math.floor(
-      (
-        dateUtc -
-        epochUtc
-      ) /
-        millisecondsPerDay
-    )
-
-  return (
-    (
-      dayDifference % 7
-    ) +
-    7
-  ) % 7
-}
-
 function isHabitCompletedOnDate(
+  history: HabitCompletion[],
   date: Date,
   habitIndex: number
 ) {
-  const pattern =
-    HABIT_COMPLETION_PATTERNS[
-      habitIndex
-    ]
+  const habit =
+    habits[habitIndex]
 
-  if (!pattern) {
+  if (!habit) {
     return false
   }
 
-  const patternIndex =
-    getMockPatternIndex(date)
-
-  return pattern[
-    patternIndex
-  ]
+  return getHabitCompletion(
+    history,
+    habit.storageId,
+    date
+  )
 }
 
-function getMockCompleted(
+function getCompletedCount(
+  history: HabitCompletion[],
   date: Date
 ) {
   return habits.reduce(
@@ -258,6 +173,7 @@ function getMockCompleted(
     ) => {
       const habitCompleted =
         isHabitCompletedOnDate(
+          history,
           date,
           habitIndex
         )
@@ -272,6 +188,7 @@ function getMockCompleted(
 }
 
 function isDayCompletedForStreak(
+  history: HabitCompletion[],
   date: Date,
   selectedHabitIndex:
     | number
@@ -281,18 +198,22 @@ function isDayCompletedForStreak(
     selectedHabitIndex === null
   ) {
     return (
-      getMockCompleted(date) ===
-      TOTAL_HABITS
+      getCompletedCount(
+        history,
+        date
+      ) === TOTAL_HABITS
     )
   }
 
   return isHabitCompletedOnDate(
+    history,
     date,
     selectedHabitIndex
   )
 }
 
 function calculateStreak(
+  history: HabitCompletion[],
   selectedDate: Date,
   selectedHabitIndex:
     | number
@@ -330,6 +251,7 @@ function calculateStreak(
   ) {
     const completed =
       isDayCompletedForStreak(
+        history,
         dateToCheck,
         selectedHabitIndex
       )
@@ -350,7 +272,8 @@ function calculateStreak(
 
 function createCalendarDays(
   visibleMonth: Date,
-  today: Date
+  today: Date,
+  history: HabitCompletion[]
 ): CalendarDay[] {
   const year =
     visibleMonth.getFullYear()
@@ -414,7 +337,8 @@ function createCalendarDays(
     const completed =
       currentMonth &&
       !future
-        ? getMockCompleted(
+        ? getCompletedCount(
+            history,
             date
           )
         : 0
@@ -440,7 +364,8 @@ function createWeekDays(
   today: Date,
   selectedHabitIndex:
     | number
-    | null
+    | null,
+  history: HabitCompletion[]
 ): WeeklyHabitDay[] {
   const normalizedReferenceDate =
     normalizeDate(
@@ -489,7 +414,8 @@ function createWeekDays(
           null
         ) {
           completed =
-            getMockCompleted(
+            getCompletedCount(
+              history,
               date
             )
         } else {
@@ -497,6 +423,7 @@ function createWeekDays(
 
           completed =
             isHabitCompletedOnDate(
+              history,
               date,
               selectedHabitIndex
             )
@@ -540,12 +467,14 @@ function ProgressRing({
   date,
   future,
   selectedHabitIndex,
+  history,
 }: {
   date: Date
   future: boolean
   selectedHabitIndex:
     | number
     | null
+  history: HabitCompletion[]
 }) {
   const colors = [
     "var(--chart-1)",
@@ -555,10 +484,6 @@ function ProgressRing({
     "var(--chart-5)",
   ]
 
-  /*
-    Framtida dag:
-    inga vanor ska se genomförda ut.
-  */
   if (future) {
     return (
       <div className="h-7 w-7 rounded-full bg-muted p-[3px]">
@@ -567,15 +492,13 @@ function ProgressRing({
     )
   }
 
-  /*
-    En specifik vana är vald.
-  */
   if (
     selectedHabitIndex !==
     null
   ) {
     const habitCompleted =
       isHabitCompletedOnDate(
+        history,
         date,
         selectedHabitIndex
       )
@@ -597,10 +520,6 @@ function ProgressRing({
     )
   }
 
-  /*
-    Alla vanor:
-    en färgad del per genomförd vana.
-  */
   const segments =
     colors
       .map(
@@ -616,6 +535,7 @@ function ProgressRing({
 
           const completed =
             isHabitCompletedOnDate(
+              history,
               date,
               index
             )
@@ -658,6 +578,16 @@ export default function Calendar() {
     )
 
   const [
+    history,
+  ] =
+    useState<HabitCompletion[]>(
+      () =>
+        ensureHabitHistorySeeded(
+          normalizedToday
+        )
+    )
+
+  const [
     visibleMonth,
     setVisibleMonth,
   ] =
@@ -684,7 +614,8 @@ export default function Calendar() {
   const calendarDays =
     createCalendarDays(
       visibleMonth,
-      today
+      today,
+      history
     )
 
   const selectedDay =
@@ -718,13 +649,6 @@ export default function Calendar() {
           selectedHabitIndex
         ]
 
-  /*
-    Texten som visas i Select-triggern.
-
-    Vi visar användarnamn,
-    aldrig interna id:n som
-    "all", "running" eller "water".
-  */
   const selectedHabitLabel =
     selectedHabit
       ? selectedHabit.name
@@ -734,7 +658,8 @@ export default function Calendar() {
     createWeekDays(
       selectedDay.date,
       today,
-      selectedHabitIndex
+      selectedHabitIndex,
+      history
     )
 
   const visibleMonthLabel =
@@ -890,6 +815,7 @@ export default function Calendar() {
       elapsedDays.filter(
         (date) =>
           isHabitCompletedOnDate(
+            history,
             date.date,
             selectedHabitIndex
           )
@@ -918,6 +844,7 @@ export default function Calendar() {
       : selectedDay.future
         ? 0
         : isHabitCompletedOnDate(
+              history,
               selectedDay.date,
               selectedHabitIndex
             )
@@ -941,6 +868,7 @@ export default function Calendar() {
 
   const selectedStreak =
     calculateStreak(
+      history,
       selectedDay.date,
       selectedHabitIndex,
       today
@@ -1237,6 +1165,9 @@ export default function Calendar() {
                       selectedHabitIndex={
                         selectedHabitIndex
                       }
+                      history={
+                        history
+                      }
                     />
                   </div>
                 </button>
@@ -1372,6 +1303,7 @@ export default function Calendar() {
             const completed =
               !selectedDay.future &&
               isHabitCompletedOnDate(
+                history,
                 selectedDay.date,
                 habitIndex
               )
