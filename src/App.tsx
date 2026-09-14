@@ -5,12 +5,12 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { HabitDetailPage } from "@/pages/HabitDetailPage"
 import { StartPage } from "@/pages/StartPage"
 import Calendar from "@/pages/Calendar"
+import { StatisticsPage } from "@/pages/statistics-page"
 
 import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar"
-import { StatisticsPage } from "@/pages/statistics-page"
 
 function App() {
   return (
@@ -31,6 +31,11 @@ function App() {
             <Route
               path="/kalender"
               element={<Calendar />}
+            />
+
+            <Route
+              path="/statistik"
+              element={<StatisticsPage />}
             />
 
             <Route
