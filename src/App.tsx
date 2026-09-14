@@ -1,46 +1,46 @@
-import { useState, useEffect } from "react"
+import { Route, Routes } from "react-router-dom"
+
 import { AppSidebar } from "@/components/app-sidebar"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbList,
-  BreadcrumbPage,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
+import { ThemeProvider } from "@/components/theme-provider"
+import { HabitDetailPage } from "@/pages/HabitDetailPage"
+import { StartPage } from "@/pages/StartPage"
+import Calendar from "@/pages/Calendar"
+
 import {
   SidebarInset,
   SidebarProvider,
-  SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { StatisticsPage } from "@/pages/statistics-page"
 
 function App() {
-  const [isDark, setIsDark] = useState(false)
-
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", isDark)
-  }, [isDark])
-
   return (
-    <SidebarProvider>
-      <AppSidebar isDark={isDark} onToggleTheme={() => setIsDark(prev => !prev)} />
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-4" />
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbPage>Start</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-        </header>
-        <div className="flex flex-1 flex-col p-4 md:p-8">
-          <StatisticsPage />
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+    <ThemeProvider
+      defaultTheme="system"
+      storageKey="keepit-theme"
+    >
+      <SidebarProvider>
+        <AppSidebar />
+
+        <SidebarInset>
+          <Routes>
+            <Route
+              path="/"
+              element={<StartPage />}
+            />
+
+            <Route
+              path="/kalender"
+              element={<Calendar />}
+            />
+
+            <Route
+              path="/habits/:id"
+              element={<HabitDetailPage />}
+            />
+          </Routes>
+        </SidebarInset>
+      </SidebarProvider>
+    </ThemeProvider>
   )
 }
 
