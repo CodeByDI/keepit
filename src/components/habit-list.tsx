@@ -70,11 +70,40 @@ function HabitRow({ habit, index, onToggle }: { habit: Habit; index: number; onT
   )
 }
 
-export function HabitList({ habits, onToggle }: { habits: Habit[]; onToggle: (id: number) => void }) {
+export function HabitList({ habits, onToggle, onAdd }: { habits: Habit[]; onToggle: (id: number) => void; onAdd?: () => void }) {
   const remaining = habits.filter((h) => !h.done)
   const done = habits.filter((h) => h.done)
 
   const doneCount = habits.filter((h) => h.done).length
+
+  if (habits.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 text-center min-h-[50vh]">
+        <div
+          className="size-14 rounded-2xl flex items-center justify-center"
+          style={{ backgroundColor: "var(--muted)" }}
+        >
+          <FireIcon size={24} style={{ color: "var(--muted-foreground)", opacity: 0.4 }} />
+        </div>
+        <div className="flex flex-col gap-1">
+          <p className="text-sm font-medium text-foreground">Inga vanor än.</p>
+          <p className="text-xs text-muted-foreground opacity-60">
+            Vilket är ett perfekt tillfälle att lägga till en.
+          </p>
+        </div>
+        <button
+          onClick={onAdd}
+          className="cursor-pointer hover:opacity-80 transition-opacity px-5 py-2.5 rounded-lg text-sm font-medium text-white"
+          style={{
+            background: "linear-gradient(135deg, #5649d4 0%, #6d5cf6 45%, #8b5cf6 78%, #f472b6 100%)",
+          }}
+        >
+          Skapa din första vana
+        </button>
+        <p className="text-xs text-muted-foreground opacity-40">Dag 1 av förhoppningsvis många.</p>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-3">
