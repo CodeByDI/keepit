@@ -1,7 +1,6 @@
 import { PieChart, Pie, Cell } from "recharts"
 import { Card, CardContent } from "@/components/ui/card"
 
-// Uses our chart color palette from index.css
 const HABIT_COLORS = [
   "var(--chart-1)",
   "var(--chart-2)",
@@ -22,10 +21,13 @@ type WeekDay = {
 
 type WeeklyCardProps = {
   days: WeekDay[]
+  selectedIndex?: number
+  onSelectDay?: (index: number) => void
 }
 
-function DayRing({ day, done, total, today, habitStates }: WeekDay) {
-  // If we have per-habit state, use each habit's actual color; otherwise fall back to index-based
+function DayRing({
+  day, done, total, today, habitStates, selected, onClick,
+}: WeekDay & { selected?: boolean; onClick?: () => void }) {
   const segments = habitStates
     ? habitStates.map((h) => ({ value: 1, color: h.done ? h.color : "var(--border)" }))
     : [
@@ -36,60 +38,70 @@ function DayRing({ day, done, total, today, habitStates }: WeekDay) {
         ...(done < total ? [{ value: total - done, color: "var(--border)" }] : []),
       ]
 
+  // today = solid primary ring; selected-non-today = subtle white outline
+  const ringStyle = today
+    ? { boxShadow: "0 0 0 2px var(--primary)" }
+    : selected
+      ? { outline: "2px solid rgba(255,255,255,0.35)", outlineOffset: "2px" }
+      : {}
+
   return (
-    <div className="flex flex-col items-center gap-1">
-      <div
-        className="rounded-full"
-        style={{ width: 40, height: 40, ...(today ? { boxShadow: "0 0 0 2px var(--primary)" } : {}) }}
-      >
-      <PieChart width={40} height={40} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-        <Pie
-          data={segments}
-          cx={20}
-          cy={20}
-          innerRadius={12}
-          outerRadius={18}
-          startAngle={90}
-          endAngle={-270}
-          dataKey="value"
-          strokeWidth={0}
-          isAnimationActive={false}
-        >
-          {segments.map((seg, i) => (
-            <Cell key={i} fill={seg.color} />
-          ))}
-        </Pie>
-      </PieChart>
+    <button
+      onClick={onClick}
+      className="flex flex-col items-center gap-1 cursor-pointer rounded-lg transition-opacity hover:opacity-80 bg-transparent border-0 p-0"
+    >
+      <div className="rounded-full" style={{ width: 40, height: 40, ...ringStyle }}>
+        <PieChart width={40} height={40} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+          <Pie
+            data={segments}
+            cx={20}
+            cy={20}
+            innerRadius={12}
+            outerRadius={18}
+            startAngle={90}
+            endAngle={-270}
+            dataKey="value"
+            strokeWidth={0}
+            isAnimationActive={false}
+          >
+            {segments.map((seg, i) => (
+              <Cell key={i} fill={seg.color} />
+            ))}
+          </Pie>
+        </PieChart>
       </div>
       <span
         className="text-xs"
         style={{
-          color: today ? "var(--primary)" : "var(--muted-foreground)",
-          fontWeight: today ? 600 : 400,
+          color: today ? "var(--primary)" : selected ? "var(--foreground)" : "var(--muted-foreground)",
+          fontWeight: today || selected ? 600 : 400,
         }}
       >
         {day}
       </span>
-    </div>
+    </button>
   )
 }
 
-export function WeeklyCard({ days }: WeeklyCardProps) {
+export function WeeklyCard({ days, selectedIndex, onSelectDay }: WeeklyCardProps) {
   const doneDays = days.filter((d) => d.done === d.total && d.total > 0).length
 
   return (
     <Card className="bg-card h-full py-0">
       <CardContent style={{ padding: "16px 20px" }} className="flex flex-col justify-between h-full">
-
         <p className="text-xs font-normal uppercase tracking-widest text-muted-foreground">
           Denna vecka
         </p>
 
-        {/* Bottom content group */}
         <div className="flex flex-col gap-3">
           <div className="flex gap-3 items-center">
             {days.map((d, i) => (
-              <DayRing key={i} {...d} />
+              <DayRing
+                key={i}
+                {...d}
+                selected={selectedIndex === i}
+                onClick={() => onSelectDay?.(i)}
+              />
             ))}
           </div>
 
@@ -97,7 +109,6 @@ export function WeeklyCard({ days }: WeeklyCardProps) {
             <span>{doneDays} av {days.length} dagar klara</span>
           </div>
         </div>
-
       </CardContent>
     </Card>
   )
