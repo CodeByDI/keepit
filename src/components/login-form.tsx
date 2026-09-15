@@ -1,0 +1,266 @@
+// src/components/login-form.tsx
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { cn } from "@/lib/utils"
+
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { CreateAccount } from "./create-account"
+
+
+// ─── Logo ─────────────────────────────────────────────────────────────────────
+function KeepItLogo() {
+    return (
+        <svg style={{ width: 45, height: 45 }} width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="keepit-logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="var(--primary)" />
+                    <stop offset="35%" stopColor="var(--primary)" />
+                    <stop offset="70%" stopColor="#a89bfa" />
+                    <stop offset="100%" stopColor="#f472b6" />
+                </linearGradient>
+            </defs>
+            <circle cx="16" cy="16" r="12" fill="none"
+                stroke="url(#keepit-logo-gradient)" strokeWidth="3" />
+        </svg>
+    )
+}
+
+export function LoginForm({
+    className,
+    ...props
+}: React.ComponentProps<"div">) {
+    // ─── State ──────────────────────────────────────
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+    const [error, setError] = useState<string | null>(null)
+    const [isLoading, setIsLoading] = useState(false)
+    const [isDialogOpen, setIsDialogOpen] = useState(false)
+    const [isHovered, setIsHovered] = useState(false)
+    const navigate = useNavigate()
+
+    // ─── Handlers ────────────────────────────────────
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setError(null)
+        setIsLoading(true)
+
+        if (!email || !password) {
+            setError("Vänligen fyll i alla fält")
+            setIsLoading(false)
+            return
+        }
+
+        try {
+            await new Promise(resolve => setTimeout(resolve, 1000))
+
+            // ─── 1. Check if user exists in localStorage ──
+            const stored = localStorage.getItem("user")
+            let storedUser = null
+
+            if (stored) {
+                try {
+                    storedUser = JSON.parse(stored)
+                } catch {
+                    // Invalid JSON
+                }
+            }
+
+            // ─── 2. If NO user exists → Show error ──
+            if (!storedUser) {
+                setError("❌ Inget konto hittas. Skapa ett konto först.")
+                setIsLoading(false)
+                return
+            }
+
+            // ─── 3. User EXISTS → Validate credentials ──
+            const emailMatches = storedUser.email.toLowerCase() === email.toLowerCase()
+            const passwordMatches = storedUser.password === password
+
+            if (emailMatches && passwordMatches) {
+                localStorage.setItem("isLoggedIn", "true")
+                navigate("/")
+            } else if (emailMatches && !passwordMatches) {
+                setError("❌ Fel lösenord. Försök igen.")
+            } else {
+                setError("❌ Inget konto hittas med den e-postadressen")
+            }
+        } catch (err) {
+            setError("Något gick fel. Försök igen.")
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    // ─── Social Login ────────────────────────────────
+    const handleSocialLogin = (provider: "apple" | "google") => {
+        const fakeUser = {
+            email: `${provider}@example.com`,
+            password: "demo123",
+            name: provider === "google" ? "Google User" : "Apple User",
+            memberSince: new Date().toLocaleDateString('sv-SE', { month: 'short', year: 'numeric' }),
+        }
+        localStorage.setItem("user", JSON.stringify(fakeUser))
+        localStorage.setItem("isLoggedIn", "true")
+        navigate("/")
+    }
+
+    // ─── Styles ──────────────────────────────────────
+    const labelClass = "text-xs font-normal uppercase tracking-widest text-muted-foreground opacity-60"
+    const fieldClass =
+        "w-full h-10 rounded-md border border-input bg-muted/40 px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+
+    // ─── Render ──────────────────────────────────────
+    return (
+        <>
+            <div
+                className={cn(
+                    "flex flex-col gap-6 w-full h-full p-8 rounded-xl border",
+                    className
+                )}
+                style={{
+                    background: "var(--login-card-bg)",
+                    borderColor: "var(--border)",
+                    borderTopColor: "var(--login-border-top)",
+                    boxShadow: "0 4px 24px rgba(0,0,0,0.06)",
+                }}
+                {...props}
+            >
+                {/* ── Wordmark / Logo ── */}
+                <div className="flex items-center justify-center gap-3">
+                    <KeepItLogo />
+                    <span className="text-2xl font-bold tracking-tight" style={{ color: "var(--primary)" }}>
+                        KeepIt
+                    </span>
+                </div>
+
+                {/* ── Subtitle ── */}
+                <p className="text-center text-sm text-muted-foreground opacity-60">
+                    Starta en ny vana. Gör den. Repeat.
+                </p>
+
+                {/* ── Google Button ── */}
+                <Button
+                    variant="outline"
+                    type="button"
+                    onClick={() => handleSocialLogin("google")}
+                    className="w-full h-10 justify-center text-sm font-medium"
+                    style={{
+                        background: "var(--login-card-bg)",
+                        borderColor: "var(--text-dim)",
+                        color: "var(--foreground)",
+                    }}
+                >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="mr-2 flex-shrink-0">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                    </svg>
+                    Fortsätt med Google
+                </Button>
+
+                {/* ── Divider ── */}
+                <div className="flex items-center gap-3">
+                    <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
+                    <span className="text-xs uppercase tracking-wider text-muted-foreground opacity-60">
+                        eller med e-post
+                    </span>
+                    <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
+                </div>
+
+                {/* ── Form ── */}
+                <form onSubmit={handleSubmit} className="space-y-4 flex-1">
+                    {/* Email */}
+                    <div className="flex flex-col gap-2">
+                        <label className={labelClass}>
+                            E-post <span className="text-primary">*</span>
+                        </label>
+                        <Input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="maja@example.com"
+                            disabled={isLoading}
+                            required
+                            className={fieldClass}
+                        />
+                    </div>
+
+                    {/* Password */}
+                    <div className="flex flex-col gap-2">
+                        <div className="flex items-center justify-between">
+                            <label className={labelClass}>
+                                Lösenord <span className="text-primary">*</span>
+                            </label>
+                            <a href="#" className="text-xs text-muted-foreground opacity-60 hover:opacity-100 transition-opacity underline-offset-2 hover:underline">
+                                Glömt lösenord?
+                            </a>
+                        </div>
+                        <Input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="••••••••"
+                            disabled={isLoading}
+                            required
+                            className={fieldClass}
+                        />
+                    </div>
+
+                    {/* Error */}
+                    {error && (
+                        <div className="text-sm text-center p-2 rounded-md" style={{
+                            color: "var(--red)",
+                            background: "var(--red-bg)"
+                        }}>
+                            {error}
+                        </div>
+                    )}
+
+                    {/* Login Button */}
+                    <Button
+                        type="submit"
+                        disabled={isLoading}
+                        className="w-full h-10 justify-center text-sm font-medium text-white border-none transition-all duration-300 mt-2"
+                        style={{
+                            background: isHovered
+                                ? `linear-gradient(135deg, rgba(86,73,212,0.7) 0%, rgba(109,92,246,0.7) 45%, rgba(139,92,246,0.7) 78%, rgba(244,114,182,0.7) 100%)`
+                                : `linear-gradient(135deg, #5649d4 0%, #6d5cf6 45%, #8b5cf6 78%, #f472b6 100%)`,
+                            boxShadow: isHovered
+                                ? "0 0 20px rgba(109,92,246,0.30), 0 0 30px rgba(244,114,182,0.25)"
+                                : "0 0 10px rgba(109,92,246,0.20), 0 0 20px rgba(244,114,182,0.12)",
+                            color: "white",
+                        }}
+                        onMouseEnter={() => setIsHovered(true)}
+                        onMouseLeave={() => setIsHovered(false)}
+                    >
+                        {isLoading ? "Loggar in..." : "Logga in"}
+                    </Button>
+                </form>
+
+                {/* ── Footer ── */}
+                <div className="text-center text-sm" style={{ color: "var(--muted-foreground)" }}>
+                    Inget konto?{" "}
+                    <a
+                        href="#"
+                        className="underline underline-offset-2 cursor-pointer hover:opacity-80 transition-opacity"
+                        style={{ color: "var(--primary)" }}
+                        onClick={(e) => {
+                            e.preventDefault()
+                            setIsDialogOpen(true)
+                        }}
+                    >
+                        Skapa ett
+                    </a>
+                </div>
+            </div>
+
+            {/* ── Create Account Dialog ── */}
+            <CreateAccount
+                open={isDialogOpen}
+                onClose={() => setIsDialogOpen(false)}
+            />
+        </>
+    )
+}

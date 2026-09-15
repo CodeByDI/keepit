@@ -1,0 +1,38 @@
+// src/pages/login/login-page.tsx
+import { LoginForm } from "@/components/login-form"
+
+export default function LoginPage() {
+    return (
+        <div
+            className="relative flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10 overflow-hidden"
+            style={{
+                background: `radial-gradient(ellipse 117% 57% at 92% 8%, rgba(109, 92, 246, 0.96) 0%, rgba(86, 73, 212, 0.92) 14%, rgba(86, 73, 212, 0.55) 32%, rgba(72, 57, 194, 0.16) 50%, rgba(72, 57, 194, 0.04) 64%, transparent 76%), var(--background)`,
+            }}
+        >
+            {/* ── Corner Details ── */}
+
+            {/* Top Left */}
+            <div className="absolute top-6 left-6 text-[10px] tracking-wider font-medium" style={{ color: "#334155" }}>
+                <div className="text-[14px]" style={{ color: "#334155" }}>+</div>
+                KEEPIT
+            </div>
+
+            {/* Top Right */}
+            <div className="absolute top-6 right-6 text-[10px] tracking-wider font-medium text-right" style={{ color: "#a9a1f0" }}>
+                <div className="text-[14px] text-right" style={{ color: "#a9a1f0" }}>+</div>
+                V 1.0
+            </div>
+
+            {/* Bottom Right */}
+            <div className="absolute bottom-6 right-6 text-[10px] tracking-wider font-medium text-right" style={{ color: "#334155" }}>
+                CONSISTENCY IS KEY
+                <div className="text-[14px] mt-1 text-right" style={{ color: "#334155" }}>+</div>
+            </div>
+
+            {/* ── Login Form ── */}
+            <div className="flex w-[400px] h-[555px] flex-col gap-6 relative z-10">
+                <LoginForm />
+            </div>
+        </div>
+    )
+}
