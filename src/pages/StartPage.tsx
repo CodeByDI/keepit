@@ -84,19 +84,22 @@ export function StartPage() {
           <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--primary)" }}>Hej {user.name}</h1>
           <p className="text-sm text-muted-foreground opacity-60">Fredag 9 September</p>
         </div>
-        <Button onClick={() => setDialogOpen(true)} className="cursor-pointer hover:opacity-80 transition-opacity" style={{ background: "linear-gradient(135deg, #5649d4 0%, #6d5cf6 45%, #8b5cf6 78%, #f472b6 100%)", color: "white", border: "none", height: "40px", fontWeight: 400 }}>
-          Skapa vana <PlusIcon size={16} />
-        </Button>
+        {habits.length > 0 && (
+          <Button onClick={() => setDialogOpen(true)} className="cursor-pointer hover:opacity-80 transition-opacity" style={{ background: "linear-gradient(135deg, #5649d4 0%, #6d5cf6 45%, #8b5cf6 78%, #f472b6 100%)", color: "white", border: "none", height: "40px", fontWeight: 400 }}>
+            Skapa vana <PlusIcon size={16} />
+          </Button>
+        )}
       </div>
 
-      {/* Cards row — streak + weekly (coming next) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" style={{ gridAutoRows: "150px" }}>
-        <StreakCard current={streakData.current} record={streakData.record} daysLeft={streakData.daysLeft} />
-        <WeeklyCard days={weekDays} />
-      </div>
+      {/* Cards + habit list — hidden when no habits yet */}
+      {habits.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" style={{ gridAutoRows: "150px" }}>
+          <StreakCard current={streakData.current} record={streakData.record} daysLeft={streakData.daysLeft} />
+          <WeeklyCard days={weekDays} />
+        </div>
+      )}
 
-      {/* Habit list */}
-      <HabitList habits={habits} onToggle={toggleHabit} />
+      <HabitList habits={habits} onToggle={toggleHabit} onAdd={() => setDialogOpen(true)} />
 
       <NewHabitDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />
     </div>

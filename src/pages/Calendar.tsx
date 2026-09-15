@@ -28,6 +28,14 @@ import {
 } from "@/components/ui/select"
 
 import { SidebarTrigger } from "@/components/ui/sidebar"
+import { Separator } from "@/components/ui/separator"
+
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+} from "@/components/ui/breadcrumb"
 
 import {
   ensureHabitHistorySeeded,
@@ -57,42 +65,24 @@ const weekdays = [
   "S",
 ]
 
+/*
+  Samma ordning och färger som StartPage / HabitDetailPage:
+
+  1 = Läs 20 sidor   = chart-1
+  2 = Koda           = chart-2
+  3 = Morgonlöpning  = chart-3
+  4 = Träna 30 min   = chart-4
+  5 = Drick 2L vatten = chart-5
+*/
 const habits = [
-  {
-    id: "running",
-    storageId: 3,
-    name: "Morgonlöpning",
-    time: "Dagligen · 07:00",
-    icon: PersonSimpleRun,
-    color: "var(--chart-1)",
-    background: "rgba(109, 92, 246, 0.12)",
-  },
-  {
-    id: "training",
-    storageId: 4,
-    name: "Träna 30 min",
-    time: "Dagligen · 17:30",
-    icon: Barbell,
-    color: "var(--chart-2)",
-    background: "rgba(139, 92, 246, 0.12)",
-  },
-  {
-    id: "water",
-    storageId: 5,
-    name: "Drick 2L vatten",
-    time: "Dagligen · 20:00",
-    icon: Drop,
-    color: "var(--chart-3)",
-    background: "rgba(168, 155, 250, 0.12)",
-  },
   {
     id: "reading",
     storageId: 1,
     name: "Läs 20 sidor",
     time: "Dagligen · 21:00",
     icon: BookOpen,
-    color: "var(--chart-4)",
-    background: "rgba(192, 132, 252, 0.12)",
+    color: "var(--chart-1)",
+    background: "rgba(109, 92, 246, 0.12)",
   },
   {
     id: "coding",
@@ -100,6 +90,33 @@ const habits = [
     name: "Koda",
     time: "Dagligen · 20:00",
     icon: Code,
+    color: "var(--chart-2)",
+    background: "rgba(139, 92, 246, 0.12)",
+  },
+  {
+    id: "running",
+    storageId: 3,
+    name: "Morgonlöpning",
+    time: "Dagligen · 07:00",
+    icon: PersonSimpleRun,
+    color: "var(--chart-3)",
+    background: "rgba(168, 155, 250, 0.12)",
+  },
+  {
+    id: "training",
+    storageId: 4,
+    name: "Träna 30 min",
+    time: "Dagligen · 17:30",
+    icon: Barbell,
+    color: "var(--chart-4)",
+    background: "rgba(192, 132, 252, 0.12)",
+  },
+  {
+    id: "water",
+    storageId: 5,
+    name: "Drick 2L vatten",
+    time: "Dagligen · 20:00",
+    icon: Drop,
     color: "var(--chart-5)",
     background: "rgba(244, 114, 182, 0.12)",
   },
@@ -347,10 +364,12 @@ function createCalendarDays(
 
     calendarDays.push({
       date,
-      day: date.getDate(),
+      day:
+        date.getDate(),
       currentMonth,
       completed,
-      total: TOTAL_HABITS,
+      total:
+        TOTAL_HABITS,
       future,
       isToday,
     })
@@ -880,14 +899,34 @@ export default function Calendar() {
       : habits
 
   return (
-    <div className="w-full min-w-0 max-w-[900px] px-3 pb-6 sm:px-4 lg:px-0">
+    <>
+      {/* SAMMA HEADERMÖNSTER SOM STARTPAGE */}
+
+      <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+        <SidebarTrigger className="-ml-1" />
+
+        <Separator
+          orientation="vertical"
+          className="mr-2 h-4"
+        />
+
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbPage>
+                Kalender
+              </BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </header>
+
+      <div className="w-full min-w-0 max-w-[900px] px-3 pb-6 pt-4 sm:p-6">
       {/* HEADER */}
 
       <header className="mb-5 border-b pb-5 sm:mb-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex items-start gap-2">
-            <SidebarTrigger className="-ml-1 mt-0.5 sm:hidden" />
-
             <div>
               <h1 className="text-[22px] font-bold tracking-[-0.04em] text-primary">
                 Kalender
@@ -900,7 +939,7 @@ export default function Calendar() {
           </div>
 
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-end">
-            {/* MÅNADSNAVIGATION */}
+            {/* M├àNADSNAVIGATION */}
 
             <div className="flex gap-1">
               <button
@@ -1393,6 +1432,7 @@ export default function Calendar() {
           }
         )}
       </section>
-    </div>
+      </div>
+    </>
   )
 }
