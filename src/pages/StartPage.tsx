@@ -109,10 +109,23 @@ export function StartPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(() => !hasCompletedOnboarding())
 
-  // Derive done state and live streak from localStorage history
+  // getDay() returns 0=Sun…6=Sat; our array starts Monday, so shift by 6
+  const todayIndex = (today.getDay() + 6) % 7
+  const [selectedDayIndex, setSelectedDayIndex] = useState(todayIndex)
+
+  // Monday of the current week
+  const monday = new Date(today)
+  monday.setDate(today.getDate() - todayIndex)
+
+  // The date the user has selected in the weekly card
+  const selectedDate = new Date(monday)
+  selectedDate.setDate(monday.getDate() + selectedDayIndex)
+  const isToday = selectedDayIndex === todayIndex
+
+  // Derive done state for the selected day; streak always counts back from today
   const habits = storedHabits.map((h) => ({
     ...h,
-    done: getHabitCompletion(history, h.id, today),
+    done: getHabitCompletion(history, h.id, selectedDate),
     streak: computeHabitStreak(history, h.id, today),
     icon: ICON_MAP[h.icon] ?? PlusIcon,
   }))
@@ -125,6 +138,7 @@ export function StartPage() {
   const daysLeft = Math.max(0, bestRecord - (bestHabit?.streak ?? 0))
 
   function toggleHabit(id: number) {
+    if (!isToday) return
     const current = getHabitCompletion(history, id, today)
     const nextHistory = setHabitCompletion(id, today, !current)
     setHistory(nextHistory)
@@ -142,13 +156,6 @@ export function StartPage() {
     setStoredHabits(updated)
     saveHabitList(updated)
   }
-
-  // getDay() returns 0=Sun…6=Sat; our array starts Monday, so shift by 6
-  const todayIndex = (today.getDay() + 6) % 7
-
-  // Monday of the current week
-  const monday = new Date(today)
-  monday.setDate(today.getDate() - todayIndex)
 
   const weekDays = WEEK_LABELS.map((label, i) => {
     const date = new Date(monday)
@@ -210,11 +217,26 @@ export function StartPage() {
             habitName={bestHabit?.title ?? ""}
             HabitIcon={bestHabit?.icon ?? PlusIcon}
           />
-          <WeeklyCard days={weekDays} />
+          <WeeklyCard
+            days={weekDays}
+            selectedIndex={selectedDayIndex}
+            onSelectDay={setSelectedDayIndex}
+          />
         </div>
       )}
 
-      <HabitList habits={habits} onToggle={toggleHabit} onAdd={() => setDialogOpen(true)} />
+      <HabitList
+        habits={habits}
+        onToggle={toggleHabit}
+        onAdd={() => setDialogOpen(true)}
+        readOnly={!isToday}
+        selectedDateLabel={
+          !isToday
+            ? selectedDate.toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" })
+                .replace(/^./, (c) => c.toUpperCase())
+            : undefined
+        }
+      />
 
       <NewHabitDialog open={dialogOpen} onClose={() => setDialogOpen(false)} onSave={handleAddHabit} />
 

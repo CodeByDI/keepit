@@ -1,4 +1,4 @@
-import { FireIcon, CheckIcon } from "@phosphor-icons/react"
+import { FireIcon, CheckIcon, CalendarBlankIcon } from "@phosphor-icons/react"
 import { useNavigate } from "react-router-dom"
 
 type Habit = {
@@ -19,7 +19,7 @@ const HABIT_COLORS = [
   "var(--chart-5)",
 ]
 
-function HabitRow({ habit, index, onToggle }: { habit: Habit; index: number; onToggle: (id: number) => void }) {
+function HabitRow({ habit, index, onToggle, readOnly }: { habit: Habit; index: number; onToggle: (id: number) => void; readOnly?: boolean }) {
   const color = HABIT_COLORS[index % HABIT_COLORS.length]
   const HabitIcon = habit.icon
   const navigate = useNavigate()
@@ -55,22 +55,33 @@ function HabitRow({ habit, index, onToggle }: { habit: Habit; index: number; onT
         {habit.streak}
       </span>
 
-      {/* Check button */}
-      <button
-        onClick={(e) => { e.stopPropagation(); onToggle(habit.id) }}
-        className="size-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors"
-        style={{
-          borderColor: habit.done ? color : "var(--border)",
-          backgroundColor: habit.done ? color : "transparent",
-        }}
-      >
-        {habit.done && <CheckIcon size={12} weight="bold" color="white" />}
-      </button>
+      {/* Check button — hidden when viewing a past day */}
+      {!readOnly && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onToggle(habit.id) }}
+          className="size-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors"
+          style={{
+            borderColor: habit.done ? color : "var(--border)",
+            backgroundColor: habit.done ? color : "transparent",
+          }}
+        >
+          {habit.done && <CheckIcon size={12} weight="bold" color="white" />}
+        </button>
+      )}
+      {readOnly && habit.done && (
+        <CheckIcon size={14} style={{ color, flexShrink: 0 }} weight="bold" />
+      )}
     </div>
   )
 }
 
-export function HabitList({ habits, onToggle, onAdd }: { habits: Habit[]; onToggle: (id: number) => void; onAdd?: () => void }) {
+export function HabitList({ habits, onToggle, onAdd, readOnly, selectedDateLabel }: {
+  habits: Habit[]
+  onToggle: (id: number) => void
+  onAdd?: () => void
+  readOnly?: boolean
+  selectedDateLabel?: string
+}) {
   const remaining = habits.filter((h) => !h.done)
   const done = habits.filter((h) => h.done)
 
@@ -107,9 +118,20 @@ export function HabitList({ habits, onToggle, onAdd }: { habits: Habit[]; onTogg
 
   return (
     <div className="flex flex-col gap-3">
+      {/* Day banner when viewing a past day */}
+      {readOnly && selectedDateLabel && (
+        <div className="flex items-center gap-2 rounded-lg border px-3 py-2 text-xs text-muted-foreground"
+          style={{ backgroundColor: "var(--muted)" }}>
+          <CalendarBlankIcon size={13} />
+          <span>Visar <span className="font-medium text-foreground">{selectedDateLabel}</span> — skrivskyddat</span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
-        <p className="text-xs font-normal uppercase tracking-widest text-muted-foreground opacity-60">Idag</p>
+        <p className="text-xs font-normal uppercase tracking-widest text-muted-foreground opacity-60">
+          {readOnly ? selectedDateLabel ?? "Vald dag" : "Idag"}
+        </p>
         <div className="flex items-center gap-2">
           {habits.map((h, i) => {
             const color = HABIT_COLORS[i % HABIT_COLORS.length]
@@ -136,7 +158,7 @@ export function HabitList({ habits, onToggle, onAdd }: { habits: Habit[]; onTogg
             </p>
           </div>
           {remaining.map((h) => (
-            <HabitRow key={h.id} habit={h} index={habits.findIndex((x) => x.id === h.id)} onToggle={onToggle} />
+            <HabitRow key={h.id} habit={h} index={habits.findIndex((x) => x.id === h.id)} onToggle={onToggle} readOnly={readOnly} />
           ))}
         </div>
       )}
@@ -150,7 +172,7 @@ export function HabitList({ habits, onToggle, onAdd }: { habits: Habit[]; onTogg
             </p>
           </div>
           {done.map((h) => (
-            <HabitRow key={h.id} habit={h} index={habits.findIndex((x) => x.id === h.id)} onToggle={onToggle} />
+            <HabitRow key={h.id} habit={h} index={habits.findIndex((x) => x.id === h.id)} onToggle={onToggle} readOnly={readOnly} />
           ))}
         </div>
       )}
