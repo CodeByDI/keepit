@@ -13,6 +13,7 @@ import {
   Fire,
   ListChecks,
   PersonSimpleRun,
+  Plus,
 } from "@phosphor-icons/react"
 
 import {
@@ -40,7 +41,9 @@ import {
 import {
   ensureHabitHistorySeeded,
   getHabitCompletion,
+  getHabitList,
   type HabitCompletion,
+  type StoredHabit,
 } from "@/lib/habit-storage"
 
 type CalendarDay = {
@@ -53,7 +56,22 @@ type CalendarDay = {
   isToday: boolean
 }
 
-const TOTAL_HABITS = 5
+const CHART_COLORS = [
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
+]
+
+const ICON_MAP: Record<string, React.ElementType> = {
+  book: BookOpen,
+  code: Code,
+  run: PersonSimpleRun,
+  barbell: Barbell,
+  drop: Drop,
+  fire: Fire,
+}
 
 const weekdays = [
   "M",
@@ -65,65 +83,41 @@ const weekdays = [
   "S",
 ]
 
-/*
-  Samma ordning och färger som StartPage / HabitDetailPage:
+type CalendarHabit = {
+  id: string
+  storageId: number
+  name: string
+  time: string
+  icon: React.ElementType
+  color: string
+  background: string
+}
 
-  1 = Läs 20 sidor   = chart-1
-  2 = Koda           = chart-2
-  3 = Morgonlöpning  = chart-3
-  4 = Träna 30 min   = chart-4
-  5 = Drick 2L vatten = chart-5
-*/
-const habits = [
-  {
-    id: "reading",
-    storageId: 1,
-    name: "Läs 20 sidor",
-    time: "Dagligen · 21:00",
-    icon: BookOpen,
-    color: "var(--chart-1)",
-    background: "rgba(109, 92, 246, 0.12)",
-  },
-  {
-    id: "coding",
-    storageId: 2,
-    name: "Koda",
-    time: "Dagligen · 20:00",
-    icon: Code,
-    color: "var(--chart-2)",
-    background: "rgba(139, 92, 246, 0.12)",
-  },
-  {
-    id: "running",
-    storageId: 3,
-    name: "Morgonlöpning",
-    time: "Dagligen · 07:00",
-    icon: PersonSimpleRun,
-    color: "var(--chart-3)",
-    background: "rgba(168, 155, 250, 0.12)",
-  },
-  {
-    id: "training",
-    storageId: 4,
-    name: "Träna 30 min",
-    time: "Dagligen · 17:30",
-    icon: Barbell,
-    color: "var(--chart-4)",
-    background: "rgba(192, 132, 252, 0.12)",
-  },
-  {
-    id: "water",
-    storageId: 5,
-    name: "Drick 2L vatten",
-    time: "Dagligen · 20:00",
-    icon: Drop,
-    color: "var(--chart-5)",
-    background: "rgba(244, 114, 182, 0.12)",
-  },
-] as const
+function buildHabitsFromStorage(): CalendarHabit[] {
+  const stored = getHabitList()
+  const list: StoredHabit[] = stored && stored.length > 0
+    ? stored
+    : [
+        { id: 1, title: "Läs 20 sidor",    reminder: "Dagligen · 21:00", streak: 3,  icon: "book" },
+        { id: 2, title: "Koda",            reminder: "Dagligen · 20:00", streak: 1,  icon: "code" },
+        { id: 3, title: "Morgonlöpning",   reminder: "Dagligen · 07:00", streak: 12, icon: "run" },
+        { id: 4, title: "Träna 30 min",    reminder: "Dagligen · 17:30", streak: 8,  icon: "barbell" },
+        { id: 5, title: "Drick 2L vatten", reminder: "Dagligen · 20:00", streak: 5,  icon: "drop" },
+      ]
 
-type HabitId =
-  (typeof habits)[number]["id"]
+  return list.map((h, i) => {
+    const color = CHART_COLORS[i % 5]
+    return {
+      id: h.id.toString(),
+      storageId: h.id,
+      name: h.title,
+      time: h.reminder,
+      icon: ICON_MAP[h.icon] ?? Plus,
+      color,
+      background: `color-mix(in oklch, ${color} 12%, transparent)`,
+    }
+  })
+}
 
 function sameDate(
   first: Date,
@@ -164,80 +158,43 @@ function normalizeDate(
 function isHabitCompletedOnDate(
   history: HabitCompletion[],
   date: Date,
-  habitIndex: number
+  habitIndex: number,
+  habits: CalendarHabit[]
 ) {
-  const habit =
-    habits[habitIndex]
-
-  if (!habit) {
-    return false
-  }
-
-  return getHabitCompletion(
-    history,
-    habit.storageId,
-    date
-  )
+  const habit = habits[habitIndex]
+  if (!habit) return false
+  return getHabitCompletion(history, habit.storageId, date)
 }
 
 function getCompletedCount(
   history: HabitCompletion[],
-  date: Date
+  date: Date,
+  habits: CalendarHabit[]
 ) {
-  return habits.reduce(
-    (
-      completed,
-      _habit,
-      habitIndex
-    ) => {
-      const habitCompleted =
-        isHabitCompletedOnDate(
-          history,
-          date,
-          habitIndex
-        )
-
-      return (
-        completed +
-        (habitCompleted ? 1 : 0)
-      )
-    },
-    0
-  )
+  return habits.reduce((completed, _habit, habitIndex) => {
+    const habitCompleted = isHabitCompletedOnDate(history, date, habitIndex, habits)
+    return completed + (habitCompleted ? 1 : 0)
+  }, 0)
 }
 
 function isDayCompletedForStreak(
   history: HabitCompletion[],
   date: Date,
-  selectedHabitIndex:
-    | number
-    | null
+  selectedHabitIndex: number | null,
+  habits: CalendarHabit[]
 ) {
-  if (
-    selectedHabitIndex === null
-  ) {
-    return (
-      getCompletedCount(
-        history,
-        date
-      ) === TOTAL_HABITS
-    )
+  if (selectedHabitIndex === null) {
+    return getCompletedCount(history, date, habits) === habits.length
   }
-
-  return isHabitCompletedOnDate(
-    history,
-    date,
-    selectedHabitIndex
-  )
+  return isHabitCompletedOnDate(history, date, selectedHabitIndex, habits)
 }
 
 function calculateStreak(
   history: HabitCompletion[],
   selectedDate: Date,
-  selectedHabitIndex:
-    | number
-    | null,
-  today: Date
+  selectedHabitIndex: number | null,
+  today: Date,
+  habits: CalendarHabit[]
 ) {
   const normalizedSelectedDate =
     normalizeDate(
@@ -272,7 +229,8 @@ function calculateStreak(
       isDayCompletedForStreak(
         history,
         dateToCheck,
-        selectedHabitIndex
+        selectedHabitIndex,
+        habits
       )
 
     if (!completed) {
@@ -292,7 +250,8 @@ function calculateStreak(
 function createCalendarDays(
   visibleMonth: Date,
   today: Date,
-  history: HabitCompletion[]
+  history: HabitCompletion[],
+  habits: CalendarHabit[]
 ): CalendarDay[] {
   const year =
     visibleMonth.getFullYear()
@@ -356,20 +315,15 @@ function createCalendarDays(
     const completed =
       currentMonth &&
       !future
-        ? getCompletedCount(
-            history,
-            date
-          )
+        ? getCompletedCount(history, date, habits)
         : 0
 
     calendarDays.push({
       date,
-      day:
-        date.getDate(),
+      day: date.getDate(),
       currentMonth,
       completed,
-      total:
-        TOTAL_HABITS,
+      total: habits.length,
       future,
       isToday,
     })
@@ -381,10 +335,9 @@ function createCalendarDays(
 function createWeekDays(
   referenceDate: Date,
   today: Date,
-  selectedHabitIndex:
-    | number
-    | null,
-  history: HabitCompletion[]
+  selectedHabitIndex: number | null,
+  history: HabitCompletion[],
+  habits: CalendarHabit[]
 ): WeeklyHabitDay[] {
   const normalizedReferenceDate =
     normalizeDate(
@@ -424,35 +377,16 @@ function createWeekDays(
         normalizedToday.getTime()
 
       let completed = 0
-      let total =
-        TOTAL_HABITS
+      let total = habits.length
 
       if (!future) {
-        if (
-          selectedHabitIndex ===
-          null
-        ) {
-          completed =
-            getCompletedCount(
-              history,
-              date
-            )
+        if (selectedHabitIndex === null) {
+          completed = getCompletedCount(history, date, habits)
         } else {
           total = 1
-
-          completed =
-            isHabitCompletedOnDate(
-              history,
-              date,
-              selectedHabitIndex
-            )
-              ? 1
-              : 0
+          completed = isHabitCompletedOnDate(history, date, selectedHabitIndex, habits) ? 1 : 0
         }
-      } else if (
-        selectedHabitIndex !==
-        null
-      ) {
+      } else if (selectedHabitIndex !== null) {
         total = 1
       }
 
@@ -487,22 +421,14 @@ function ProgressRing({
   future,
   selectedHabitIndex,
   history,
+  habits,
 }: {
   date: Date
   future: boolean
-  selectedHabitIndex:
-    | number
-    | null
+  selectedHabitIndex: number | null
   history: HabitCompletion[]
+  habits: CalendarHabit[]
 }) {
-  const colors = [
-    "var(--chart-1)",
-    "var(--chart-2)",
-    "var(--chart-3)",
-    "var(--chart-4)",
-    "var(--chart-5)",
-  ]
-
   if (future) {
     return (
       <div className="h-5 w-5 rounded-full bg-muted p-[2px] sm:h-7 sm:w-7 sm:p-[3px]">
@@ -511,27 +437,15 @@ function ProgressRing({
     )
   }
 
-  if (
-    selectedHabitIndex !==
-    null
-  ) {
-    const habitCompleted =
-      isHabitCompletedOnDate(
-        history,
-        date,
-        selectedHabitIndex
-      )
-
+  if (selectedHabitIndex !== null) {
+    const habitCompleted = isHabitCompletedOnDate(history, date, selectedHabitIndex, habits)
     return (
       <div
         className="h-5 w-5 rounded-full p-[2px] sm:h-7 sm:w-7 sm:p-[3px]"
         style={{
-          background:
-            habitCompleted
-              ? colors[
-                  selectedHabitIndex
-                ]
-              : "var(--muted)",
+          background: habitCompleted
+            ? CHART_COLORS[selectedHabitIndex % 5]
+            : "var(--muted)",
         }}
       >
         <div className="h-full w-full rounded-full bg-card" />
@@ -539,35 +453,16 @@ function ProgressRing({
     )
   }
 
-  const segments =
-    colors
-      .map(
-        (
-          color,
-          index
-        ) => {
-          const start =
-            index * 72
-
-          const end =
-            start + 72
-
-          const completed =
-            isHabitCompletedOnDate(
-              history,
-              date,
-              index
-            )
-
-          const segmentColor =
-            completed
-              ? color
-              : "var(--muted)"
-
-          return `${segmentColor} ${start}deg ${end}deg`
-        }
-      )
-      .join(", ")
+  const segmentDeg = habits.length > 0 ? 360 / habits.length : 360
+  const segments = habits
+    .map((habit, index) => {
+      const start = index * segmentDeg
+      const end = start + segmentDeg
+      const completed = isHabitCompletedOnDate(history, date, index, habits)
+      const segmentColor = completed ? habit.color : "var(--muted)"
+      return `${segmentColor} ${start}deg ${end}deg`
+    })
+    .join(", ")
 
   return (
     <div
@@ -595,6 +490,8 @@ export default function Calendar() {
       today.getMonth(),
       1
     )
+
+  const [habits] = useState<CalendarHabit[]>(() => buildHabitsFromStorage())
 
   const [
     history,
@@ -625,16 +522,14 @@ export default function Calendar() {
   const [
     selectedHabitId,
     setSelectedHabitId,
-  ] =
-    useState<
-      "all" | HabitId
-    >("all")
+  ] = useState<"all" | string>("all")
 
   const calendarDays =
     createCalendarDays(
       visibleMonth,
       today,
-      history
+      history,
+      habits
     )
 
   const selectedDay =
@@ -678,7 +573,8 @@ export default function Calendar() {
       selectedDay.date,
       today,
       selectedHabitIndex,
-      history
+      history,
+      habits
     )
 
   const visibleMonthLabel =
@@ -813,7 +709,7 @@ export default function Calendar() {
 
     const totalPossibleHabits =
       elapsedDays.length *
-      TOTAL_HABITS
+      habits.length
 
     monthPercentage =
       totalPossibleHabits >
@@ -836,7 +732,8 @@ export default function Calendar() {
           isHabitCompletedOnDate(
             history,
             date.date,
-            selectedHabitIndex
+            selectedHabitIndex,
+            habits
           )
       ).length
 
@@ -865,7 +762,8 @@ export default function Calendar() {
         : isHabitCompletedOnDate(
               history,
               selectedDay.date,
-              selectedHabitIndex
+              selectedHabitIndex,
+              habits
             )
           ? 1
           : 0
@@ -890,7 +788,8 @@ export default function Calendar() {
       history,
       selectedDay.date,
       selectedHabitIndex,
-      today
+      today,
+      habits
     )
 
   const visibleHabits =
@@ -990,15 +889,7 @@ export default function Calendar() {
                 value={
                   selectedHabitId
                 }
-                onValueChange={(
-                  value
-                ) =>
-                  setSelectedHabitId(
-                    value as
-                      | "all"
-                      | HabitId
-                  )
-                }
+                onValueChange={(value) => setSelectedHabitId(value)}
               >
                 <SelectTrigger
                   className="w-full text-xs sm:min-w-[170px]"
@@ -1202,18 +1093,11 @@ export default function Calendar() {
                     }
                   >
                     <ProgressRing
-                      date={
-                        date.date
-                      }
-                      future={
-                        date.future
-                      }
-                      selectedHabitIndex={
-                        selectedHabitIndex
-                      }
-                      history={
-                        history
-                      }
+                      date={date.date}
+                      future={date.future}
+                      selectedHabitIndex={selectedHabitIndex}
+                      history={history}
+                      habits={habits}
                     />
                   </div>
                 </button>
@@ -1351,7 +1235,8 @@ export default function Calendar() {
               isHabitCompletedOnDate(
                 history,
                 selectedDay.date,
-                habitIndex
+                habitIndex,
+                habits
               )
 
             return (
