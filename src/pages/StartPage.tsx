@@ -21,8 +21,6 @@ import {
 
 // ─── Static data (replace with API later) ─────────────────────────────────────
 
-const user = { name: "Maja" }
-
 const WEEK_LABELS = ["M", "T", "O", "T", "F", "L", "S"]
 
 // ─── Streak helpers ────────────────────────────────────────────────────────────
@@ -92,6 +90,17 @@ const SEED_HABITS: StoredHabit[] = [
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function StartPage() {
+  const [userName] = useState(() => {
+    try {
+      const stored = localStorage.getItem("user")
+      if (stored) {
+        const fullName: string = JSON.parse(stored).name ?? ""
+        return fullName.split(" ")[0]
+      }
+    } catch {}
+    return "Maja"
+  })
+
   const [today] = useState(() => {
     const d = new Date()
     return new Date(d.getFullYear(), d.getMonth(), d.getDate())
@@ -194,7 +203,7 @@ export function StartPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--primary)" }}>Hej {user.name}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--primary)" }}>Hej {userName}</h1>
           <p className="text-sm text-muted-foreground opacity-60">
             {today.toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" })
               .replace(/^./, (c) => c.toUpperCase())}
