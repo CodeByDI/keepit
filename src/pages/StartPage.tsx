@@ -23,21 +23,63 @@ import {
 
 const user = { name: "Maja" }
 
-const staticWeekDays = [
-  { day: "M", done: 5, total: 5 },
-  { day: "T", done: 4, total: 5 },
-  { day: "O", done: 5, total: 5 },
-  { day: "T", done: 4, total: 5 },
-  { day: "F", done: 3, total: 5 },
-  { day: "L", done: 0, total: 5 },
-  { day: "S", done: 0, total: 5 },
-]
+const WEEK_LABELS = ["M", "T", "O", "T", "F", "L", "S"]
 
-const streakData = {
-  current: 12,
-  record: 21,
-  daysLeft: 9,
+// ─── Streak helpers ────────────────────────────────────────────────────────────
+
+// How many consecutive days ending on `today` has a single habit been done?
+function computeHabitStreak(history: HabitCompletion[], habitId: number, today: Date): number {
+  let streak = 0
+  const date = new Date(today)
+  while (getHabitCompletion(history, habitId, date)) {
+    streak++
+    date.setDate(date.getDate() - 1)
+  }
+  return streak
 }
+
+// How many consecutive days ending on `today` were ALL habits done?
+function computeCurrentStreak(history: HabitCompletion[], habitIds: number[], today: Date): number {
+  let streak = 0
+  const date = new Date(today)
+  while (habitIds.every((id) => getHabitCompletion(history, id, date))) {
+    streak++
+    date.setDate(date.getDate() - 1)
+  }
+  return streak
+}
+
+// Longest ever all-habits streak in the full history
+function computeRecordStreak(history: HabitCompletion[], habitIds: number[]): number {
+  if (!history.length || !habitIds.length) return 0
+  const dateKeys = [...new Set(history.map((h) => h.date))].sort()
+  let record = 0
+  let run = 0
+  let prevKey = ""
+  for (const key of dateKeys) {
+    const date = new Date(key)
+    const allDone = habitIds.every((id) => getHabitCompletion(history, id, date))
+    if (allDone) {
+      const isConsecutive = prevKey !== "" &&
+        (date.getTime() - new Date(prevKey).getTime()) === 86_400_000
+      run = isConsecutive ? run + 1 : 1
+      record = Math.max(record, run)
+      prevKey = key
+    } else {
+      run = 0
+      prevKey = ""
+    }
+  }
+  return record
+}
+
+const CHART_COLORS = [
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
+]
 
 // Icon map — converts stored icon name string to a React component
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -78,12 +120,18 @@ export function StartPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(() => !hasCompletedOnboarding())
 
-  // Derive done state from localStorage history, attach icon components
+  // Derive done state and live streak from localStorage history
+  const habitIds = storedHabits.map((h) => h.id)
   const habits = storedHabits.map((h) => ({
     ...h,
     done: getHabitCompletion(history, h.id, today),
+    streak: computeHabitStreak(history, h.id, today),
     icon: ICON_MAP[h.icon] ?? PlusIcon,
   }))
+
+  const currentStreak = computeCurrentStreak(history, habitIds, today)
+  const recordStreak = Math.max(computeRecordStreak(history, habitIds), currentStreak)
+  const daysLeft = Math.max(0, recordStreak - currentStreak)
 
   function toggleHabit(id: number) {
     const current = getHabitCompletion(history, id, today)
@@ -107,20 +155,28 @@ export function StartPage() {
   // getDay() returns 0=Sun…6=Sat; our array starts Monday, so shift by 6
   const todayIndex = (today.getDay() + 6) % 7
 
-  const weekDays = staticWeekDays.map((d, i) =>
-    i === todayIndex
-      ? {
-          ...d,
-          today: true,
-          done: habits.filter((h) => h.done).length,
-          total: habits.length,
-          habitStates: habits.map((h, j) => ({
-            color: ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"][j % 5],
-            done: h.done,
-          })),
-        }
-      : d
-  )
+  // Monday of the current week
+  const monday = new Date(today)
+  monday.setDate(today.getDate() - todayIndex)
+
+  const weekDays = WEEK_LABELS.map((label, i) => {
+    const date = new Date(monday)
+    date.setDate(monday.getDate() + i)
+    const isFuture = date > today
+
+    const habitStates = storedHabits.map((h, j) => ({
+      color: CHART_COLORS[j % 5],
+      done: isFuture ? false : getHabitCompletion(history, h.id, date),
+    }))
+
+    return {
+      day: label,
+      done: habitStates.filter((s) => s.done).length,
+      total: storedHabits.length,
+      today: i === todayIndex ? true : undefined,
+      habitStates,
+    }
+  })
 
   return (
     <>
@@ -156,7 +212,7 @@ export function StartPage() {
       {/* Cards + habit list — hidden when no habits yet */}
       {habits.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" style={{ gridAutoRows: "150px" }}>
-          <StreakCard current={streakData.current} record={streakData.record} daysLeft={streakData.daysLeft} />
+          <StreakCard current={currentStreak} record={recordStreak} daysLeft={daysLeft} />
           <WeeklyCard days={weekDays} />
         </div>
       )}
