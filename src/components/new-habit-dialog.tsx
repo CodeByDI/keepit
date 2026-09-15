@@ -13,17 +13,20 @@ import { CaretDownIcon, FireIcon } from "@phosphor-icons/react"
 type NewHabitDialogProps = {
   open: boolean
   onClose: () => void
+  onSave?: (title: string, reminder: string) => void
 }
 
-export function NewHabitDialog({ open, onClose }: NewHabitDialogProps) {
+export function NewHabitDialog({ open, onClose, onSave }: NewHabitDialogProps) {
   const [title, setTitle] = useState("")
   const [frequency, setFrequency] = useState("Dagligen")
   const [time, setTime] = useState("07:00")
   const [reminder, setReminder] = useState("På")
 
   function handleSave() {
-    // Will connect to backend later
-    onClose()
+    if (!title.trim()) return
+    const reminderText = reminder === "På" ? `${frequency} · ${time}` : "Ingen påminnelse"
+    onSave?.(title.trim(), reminderText)
+    handleCancel()
   }
 
   function handleCancel() {

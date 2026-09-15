@@ -8,6 +8,15 @@ import { HabitList } from "@/components/habit-list"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/components/ui/breadcrumb"
+import {
+  ensureHabitHistorySeeded,
+  getHabitCompletion,
+  setHabitCompletion,
+  getHabitList,
+  saveHabitList,
+  type HabitCompletion,
+  type StoredHabit,
+} from "@/lib/habit-storage"
 
 // ─── Static data (replace with API later) ─────────────────────────────────────
 
@@ -29,24 +38,68 @@ const streakData = {
   daysLeft: 9,
 }
 
-const initialHabits = [
-  { id: 1, title: "Läs 20 sidor",    reminder: "Påminnelse · 21:00", streak: 3,  done: false, icon: BookOpenIcon },
-  { id: 2, title: "Koda",            reminder: "Påminnelse · 20:00", streak: 1,  done: false, icon: CodeIcon },
-  { id: 3, title: "Morgonlöpning",   reminder: "Dagligen · 07:00",   streak: 12, done: true,  icon: PersonSimpleRunIcon },
-  { id: 4, title: "Träna 30 min",    reminder: "Dagligen · 17:30",   streak: 8,  done: true,  icon: BarbellIcon },
-  { id: 5, title: "Drick 2L vatten", reminder: "Dagligen · 20:00",   streak: 5,  done: true,  icon: DropIcon },
+// Icon map — converts stored icon name string to a React component
+const ICON_MAP: Record<string, React.ElementType> = {
+  book:    BookOpenIcon,
+  code:    CodeIcon,
+  run:     PersonSimpleRunIcon,
+  barbell: BarbellIcon,
+  drop:    DropIcon,
+  fire:    PlusIcon, // default fallback for new habits
+}
+
+// Seed data — used only if localStorage has no habit list yet
+const SEED_HABITS: StoredHabit[] = [
+  { id: 1, title: "Läs 20 sidor",    reminder: "Påminnelse · 21:00", streak: 3,  icon: "book" },
+  { id: 2, title: "Koda",            reminder: "Påminnelse · 20:00", streak: 1,  icon: "code" },
+  { id: 3, title: "Morgonlöpning",   reminder: "Dagligen · 07:00",   streak: 12, icon: "run" },
+  { id: 4, title: "Träna 30 min",    reminder: "Dagligen · 17:30",   streak: 8,  icon: "barbell" },
+  { id: 5, title: "Drick 2L vatten", reminder: "Dagligen · 20:00",   streak: 5,  icon: "drop" },
 ]
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function StartPage() {
-  const [habits, setHabits] = useState(initialHabits)
+  const [today] = useState(() => {
+    const d = new Date()
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate())
+  })
+  const [history, setHistory] = useState<HabitCompletion[]>(() =>
+    ensureHabitHistorySeeded(today)
+  )
+  const [storedHabits, setStoredHabits] = useState<StoredHabit[]>(() => {
+    const saved = getHabitList()
+    if (saved && saved.length > 0) return saved
+    // Seed localStorage with defaults on first load
+    saveHabitList(SEED_HABITS)
+    return SEED_HABITS
+  })
   const [dialogOpen, setDialogOpen] = useState(false)
 
+  // Derive done state from localStorage history, attach icon components
+  const habits = storedHabits.map((h) => ({
+    ...h,
+    done: getHabitCompletion(history, h.id, today),
+    icon: ICON_MAP[h.icon] ?? PlusIcon,
+  }))
+
   function toggleHabit(id: number) {
-    setHabits((prev) =>
-      prev.map((h) => (h.id === id ? { ...h, done: !h.done } : h))
-    )
+    const current = getHabitCompletion(history, id, today)
+    const nextHistory = setHabitCompletion(id, today, !current)
+    setHistory(nextHistory)
+  }
+
+  function handleAddHabit(title: string, reminder: string) {
+    const newHabit: StoredHabit = {
+      id: storedHabits.length > 0 ? Math.max(...storedHabits.map((h) => h.id)) + 1 : 1,
+      title,
+      reminder,
+      streak: 0,
+      icon: "fire",
+    }
+    const updated = [...storedHabits, newHabit]
+    setStoredHabits(updated)
+    saveHabitList(updated)
   }
 
   const weekDays = staticWeekDays.map((d) =>
@@ -101,7 +154,7 @@ export function StartPage() {
 
       <HabitList habits={habits} onToggle={toggleHabit} onAdd={() => setDialogOpen(true)} />
 
-      <NewHabitDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />
+      <NewHabitDialog open={dialogOpen} onClose={() => setDialogOpen(false)} onSave={handleAddHabit} />
     </div>
     </>
   )
