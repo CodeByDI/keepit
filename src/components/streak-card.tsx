@@ -1,14 +1,16 @@
 import { Card, CardContent } from "@/components/ui/card"
-import { FireIcon, TrophyIcon } from "@phosphor-icons/react"
+import { TrophyIcon } from "@phosphor-icons/react"
 
 type StreakCardProps = {
   current: number
   record: number
   daysLeft: number
+  habitName: string
+  HabitIcon: React.ElementType
 }
 
-export function StreakCard({ current, record, daysLeft }: StreakCardProps) {
-  const progress = Math.round((current / record) * 100)
+export function StreakCard({ current, record, daysLeft, habitName, HabitIcon }: StreakCardProps) {
+  const progress = record > 0 ? Math.min(100, Math.round((current / record) * 100)) : 100
 
   return (
     <Card
@@ -19,31 +21,38 @@ export function StreakCard({ current, record, daysLeft }: StreakCardProps) {
     >
       <CardContent style={{ padding: "16px 20px" }} className="flex flex-col justify-between h-full">
 
-        {/* Label */}
-        <p className="text-xs font-normal uppercase tracking-widest opacity-60">
-          Streak
-        </p>
+        {/* Label row with habit icon */}
+        <div className="flex items-center gap-1.5">
+          <p className="text-xs font-normal uppercase tracking-widest opacity-60">Streak</p>
+          <div className="opacity-70">
+            <HabitIcon size={13} />
+          </div>
+        </div>
 
         {/* Bottom content group */}
         <div className="flex flex-col gap-3">
           <div className="flex items-baseline gap-1">
             <span className="text-5xl font-bold">{current}</span>
-            <span className="text-base font-medium flex items-center gap-1">
-              dagar <FireIcon size={16} />
-            </span>
+            <span className="text-base font-medium opacity-80">dagar</span>
           </div>
 
           <div className="h-1.5 rounded-full w-full" style={{ backgroundColor: "rgba(255,255,255,0.2)" }}>
             <div
-              className="h-1.5 rounded-full"
+              className="h-1.5 rounded-full transition-all"
               style={{ width: `${progress}%`, backgroundColor: "rgba(255,255,255,0.75)" }}
             />
           </div>
 
           <div className="flex justify-end text-xs opacity-60">
-            <span className="flex items-center gap-1">
-              {daysLeft} dagar till nytt rekord <TrophyIcon size={16} />
-            </span>
+            {daysLeft > 0 ? (
+              <span className="flex items-center gap-1">
+                {daysLeft} dagar till rekord i {habitName} <TrophyIcon size={13} />
+              </span>
+            ) : (
+              <span className="flex items-center gap-1">
+                Rekord i {habitName}! <TrophyIcon size={13} />
+              </span>
+            )}
           </div>
         </div>
 

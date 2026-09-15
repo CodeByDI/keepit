@@ -38,30 +38,19 @@ function computeHabitStreak(history: HabitCompletion[], habitId: number, today: 
   return streak
 }
 
-// How many consecutive days ending on `today` were ALL habits done?
-function computeCurrentStreak(history: HabitCompletion[], habitIds: number[], today: Date): number {
-  let streak = 0
-  const date = new Date(today)
-  while (habitIds.every((id) => getHabitCompletion(history, id, date))) {
-    streak++
-    date.setDate(date.getDate() - 1)
-  }
-  return streak
-}
-
-// Longest ever all-habits streak in the full history
-function computeRecordStreak(history: HabitCompletion[], habitIds: number[]): number {
-  if (!history.length || !habitIds.length) return 0
-  const dateKeys = [...new Set(history.map((h) => h.date))].sort()
+// Longest ever streak for a single habit in the full history
+function computeHabitRecordStreak(history: HabitCompletion[], habitId: number): number {
+  const dateKeys = [...new Set(
+    history.filter((h) => h.habitId === habitId).map((h) => h.date)
+  )].sort()
   let record = 0
   let run = 0
   let prevKey = ""
   for (const key of dateKeys) {
-    const date = new Date(key)
-    const allDone = habitIds.every((id) => getHabitCompletion(history, id, date))
-    if (allDone) {
+    const done = history.find((h) => h.habitId === habitId && h.date === key)?.completed ?? false
+    if (done) {
       const isConsecutive = prevKey !== "" &&
-        (date.getTime() - new Date(prevKey).getTime()) === 86_400_000
+        (new Date(key).getTime() - new Date(prevKey).getTime()) === 86_400_000
       run = isConsecutive ? run + 1 : 1
       record = Math.max(record, run)
       prevKey = key
@@ -121,7 +110,6 @@ export function StartPage() {
   const [showOnboarding, setShowOnboarding] = useState(() => !hasCompletedOnboarding())
 
   // Derive done state and live streak from localStorage history
-  const habitIds = storedHabits.map((h) => h.id)
   const habits = storedHabits.map((h) => ({
     ...h,
     done: getHabitCompletion(history, h.id, today),
@@ -129,9 +117,12 @@ export function StartPage() {
     icon: ICON_MAP[h.icon] ?? PlusIcon,
   }))
 
-  const currentStreak = computeCurrentStreak(history, habitIds, today)
-  const recordStreak = Math.max(computeRecordStreak(history, habitIds), currentStreak)
-  const daysLeft = Math.max(0, recordStreak - currentStreak)
+  // StreakCard: highlight the habit with the longest current streak
+  const bestHabit = habits.length > 0
+    ? habits.reduce((best, h) => h.streak > best.streak ? h : best, habits[0])
+    : null
+  const bestRecord = bestHabit ? Math.max(computeHabitRecordStreak(history, bestHabit.id), bestHabit.streak) : 0
+  const daysLeft = Math.max(0, bestRecord - (bestHabit?.streak ?? 0))
 
   function toggleHabit(id: number) {
     const current = getHabitCompletion(history, id, today)
@@ -212,7 +203,13 @@ export function StartPage() {
       {/* Cards + habit list — hidden when no habits yet */}
       {habits.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" style={{ gridAutoRows: "150px" }}>
-          <StreakCard current={currentStreak} record={recordStreak} daysLeft={daysLeft} />
+          <StreakCard
+            current={bestHabit?.streak ?? 0}
+            record={bestRecord}
+            daysLeft={daysLeft}
+            habitName={bestHabit?.title ?? ""}
+            HabitIcon={bestHabit?.icon ?? PlusIcon}
+          />
           <WeeklyCard days={weekDays} />
         </div>
       )}
