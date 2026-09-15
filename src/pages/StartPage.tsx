@@ -23,21 +23,52 @@ import {
 
 const user = { name: "Maja" }
 
-const staticWeekDays = [
-  { day: "M", done: 5, total: 5 },
-  { day: "T", done: 4, total: 5 },
-  { day: "O", done: 5, total: 5 },
-  { day: "T", done: 4, total: 5 },
-  { day: "F", done: 3, total: 5 },
-  { day: "L", done: 0, total: 5 },
-  { day: "S", done: 0, total: 5 },
-]
+const WEEK_LABELS = ["M", "T", "O", "T", "F", "L", "S"]
 
-const streakData = {
-  current: 12,
-  record: 21,
-  daysLeft: 9,
+// ─── Streak helpers ────────────────────────────────────────────────────────────
+
+// How many consecutive days ending on `today` has a single habit been done?
+function computeHabitStreak(history: HabitCompletion[], habitId: number, today: Date): number {
+  let streak = 0
+  const date = new Date(today)
+  while (getHabitCompletion(history, habitId, date)) {
+    streak++
+    date.setDate(date.getDate() - 1)
+  }
+  return streak
 }
+
+// Longest ever streak for a single habit in the full history
+function computeHabitRecordStreak(history: HabitCompletion[], habitId: number): number {
+  const dateKeys = [...new Set(
+    history.filter((h) => h.habitId === habitId).map((h) => h.date)
+  )].sort()
+  let record = 0
+  let run = 0
+  let prevKey = ""
+  for (const key of dateKeys) {
+    const done = history.find((h) => h.habitId === habitId && h.date === key)?.completed ?? false
+    if (done) {
+      const isConsecutive = prevKey !== "" &&
+        (new Date(key).getTime() - new Date(prevKey).getTime()) === 86_400_000
+      run = isConsecutive ? run + 1 : 1
+      record = Math.max(record, run)
+      prevKey = key
+    } else {
+      run = 0
+      prevKey = ""
+    }
+  }
+  return record
+}
+
+const CHART_COLORS = [
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
+]
 
 // Icon map — converts stored icon name string to a React component
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -78,14 +109,36 @@ export function StartPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(() => !hasCompletedOnboarding())
 
-  // Derive done state from localStorage history, attach icon components
+  // getDay() returns 0=Sun…6=Sat; our array starts Monday, so shift by 6
+  const todayIndex = (today.getDay() + 6) % 7
+  const [selectedDayIndex, setSelectedDayIndex] = useState(todayIndex)
+
+  // Monday of the current week
+  const monday = new Date(today)
+  monday.setDate(today.getDate() - todayIndex)
+
+  // The date the user has selected in the weekly card
+  const selectedDate = new Date(monday)
+  selectedDate.setDate(monday.getDate() + selectedDayIndex)
+  const isToday = selectedDayIndex === todayIndex
+
+  // Derive done state for the selected day; streak always counts back from today
   const habits = storedHabits.map((h) => ({
     ...h,
-    done: getHabitCompletion(history, h.id, today),
+    done: getHabitCompletion(history, h.id, selectedDate),
+    streak: computeHabitStreak(history, h.id, today),
     icon: ICON_MAP[h.icon] ?? PlusIcon,
   }))
 
+  // StreakCard: highlight the habit with the longest current streak
+  const bestHabit = habits.length > 0
+    ? habits.reduce((best, h) => h.streak > best.streak ? h : best, habits[0])
+    : null
+  const bestRecord = bestHabit ? Math.max(computeHabitRecordStreak(history, bestHabit.id), bestHabit.streak) : 0
+  const daysLeft = Math.max(0, bestRecord - (bestHabit?.streak ?? 0))
+
   function toggleHabit(id: number) {
+    if (!isToday) return
     const current = getHabitCompletion(history, id, today)
     const nextHistory = setHabitCompletion(id, today, !current)
     setHistory(nextHistory)
@@ -104,23 +157,24 @@ export function StartPage() {
     saveHabitList(updated)
   }
 
-  // getDay() returns 0=Sun…6=Sat; our array starts Monday, so shift by 6
-  const todayIndex = (today.getDay() + 6) % 7
+  const weekDays = WEEK_LABELS.map((label, i) => {
+    const date = new Date(monday)
+    date.setDate(monday.getDate() + i)
+    const isFuture = date > today
 
-  const weekDays = staticWeekDays.map((d, i) =>
-    i === todayIndex
-      ? {
-          ...d,
-          today: true,
-          done: habits.filter((h) => h.done).length,
-          total: habits.length,
-          habitStates: habits.map((h, j) => ({
-            color: ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"][j % 5],
-            done: h.done,
-          })),
-        }
-      : d
-  )
+    const habitStates = storedHabits.map((h, j) => ({
+      color: CHART_COLORS[j % 5],
+      done: isFuture ? false : getHabitCompletion(history, h.id, date),
+    }))
+
+    return {
+      day: label,
+      done: habitStates.filter((s) => s.done).length,
+      total: storedHabits.length,
+      today: i === todayIndex ? true : undefined,
+      habitStates,
+    }
+  })
 
   return (
     <>
@@ -156,12 +210,33 @@ export function StartPage() {
       {/* Cards + habit list — hidden when no habits yet */}
       {habits.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" style={{ gridAutoRows: "150px" }}>
-          <StreakCard current={streakData.current} record={streakData.record} daysLeft={streakData.daysLeft} />
-          <WeeklyCard days={weekDays} />
+          <StreakCard
+            current={bestHabit?.streak ?? 0}
+            record={bestRecord}
+            daysLeft={daysLeft}
+            habitName={bestHabit?.title ?? ""}
+            HabitIcon={bestHabit?.icon ?? PlusIcon}
+          />
+          <WeeklyCard
+            days={weekDays}
+            selectedIndex={selectedDayIndex}
+            onSelectDay={setSelectedDayIndex}
+          />
         </div>
       )}
 
-      <HabitList habits={habits} onToggle={toggleHabit} onAdd={() => setDialogOpen(true)} />
+      <HabitList
+        habits={habits}
+        onToggle={toggleHabit}
+        onAdd={() => setDialogOpen(true)}
+        readOnly={!isToday}
+        selectedDateLabel={
+          !isToday
+            ? selectedDate.toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" })
+                .replace(/^./, (c) => c.toUpperCase())
+            : undefined
+        }
+      />
 
       <NewHabitDialog open={dialogOpen} onClose={() => setDialogOpen(false)} onSave={handleAddHabit} />
 
