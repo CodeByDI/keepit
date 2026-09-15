@@ -28,7 +28,7 @@ const staticWeekDays = [
   { day: "T", done: 4, total: 5 },
   { day: "O", done: 5, total: 5 },
   { day: "T", done: 4, total: 5 },
-  { day: "F", done: 3, total: 5, today: true },
+  { day: "F", done: 3, total: 5 },
   { day: "L", done: 0, total: 5 },
   { day: "S", done: 0, total: 5 },
 ]
@@ -104,14 +104,18 @@ export function StartPage() {
     saveHabitList(updated)
   }
 
-  const weekDays = staticWeekDays.map((d) =>
-    d.today
+  // getDay() returns 0=Sun…6=Sat; our array starts Monday, so shift by 6
+  const todayIndex = (today.getDay() + 6) % 7
+
+  const weekDays = staticWeekDays.map((d, i) =>
+    i === todayIndex
       ? {
           ...d,
+          today: true,
           done: habits.filter((h) => h.done).length,
           total: habits.length,
-          habitStates: habits.map((h, i) => ({
-            color: ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"][i % 5],
+          habitStates: habits.map((h, j) => ({
+            color: ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"][j % 5],
             done: h.done,
           })),
         }
@@ -137,7 +141,10 @@ export function StartPage() {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--primary)" }}>Hej {user.name}</h1>
-          <p className="text-sm text-muted-foreground opacity-60">Fredag 9 September</p>
+          <p className="text-sm text-muted-foreground opacity-60">
+            {today.toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" })
+              .replace(/^./, (c) => c.toUpperCase())}
+          </p>
         </div>
         {habits.length > 0 && (
           <Button onClick={() => setDialogOpen(true)} className="cursor-pointer hover:opacity-80 transition-opacity" style={{ background: "linear-gradient(135deg, #5649d4 0%, #6d5cf6 45%, #8b5cf6 78%, #f472b6 100%)", color: "white", border: "none", height: "40px", fontWeight: 400 }}>
