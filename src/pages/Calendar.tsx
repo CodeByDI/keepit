@@ -798,9 +798,8 @@ export default function Calendar() {
         !date.future
     )
 
-  let monthPercentage = 0
-
-  let monthResultText = ""
+  let monthPercentage: number
+  let monthResultText: string
 
   if (
     selectedHabitIndex ===
