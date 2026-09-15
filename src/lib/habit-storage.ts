@@ -4,6 +4,33 @@ export type HabitCompletion = {
   completed: boolean
 }
 
+export type StoredHabit = {
+  id: number
+  title: string
+  reminder: string
+  streak: number
+  icon: string
+}
+
+export const HABIT_LIST_STORAGE_KEY = "keepit.habits.v1"
+
+export function getHabitList(): StoredHabit[] | null {
+  if (!hasLocalStorage()) return null
+  const stored = window.localStorage.getItem(HABIT_LIST_STORAGE_KEY)
+  if (!stored) return null
+  try {
+    const parsed = JSON.parse(stored)
+    return Array.isArray(parsed) ? parsed : null
+  } catch {
+    return null
+  }
+}
+
+export function saveHabitList(habits: StoredHabit[]) {
+  if (!hasLocalStorage()) return
+  window.localStorage.setItem(HABIT_LIST_STORAGE_KEY, JSON.stringify(habits))
+}
+
 export const HABIT_HISTORY_STORAGE_KEY =
   "keepit.habit-completions.v1"
 
