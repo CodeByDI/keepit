@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { OnboardingModal, hasCompletedOnboarding } from "@/components/onboarding-modal"
 import { Button } from "@/components/ui/button"
 import { NewHabitDialog } from "@/components/new-habit-dialog"
 import { PlusIcon, BookOpenIcon, CodeIcon, PersonSimpleRunIcon, BarbellIcon, DropIcon } from "@phosphor-icons/react"
@@ -75,6 +76,7 @@ export function StartPage() {
     return SEED_HABITS
   })
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(() => !hasCompletedOnboarding())
 
   // Derive done state from localStorage history, attach icon components
   const habits = storedHabits.map((h) => ({
@@ -155,6 +157,10 @@ export function StartPage() {
       <HabitList habits={habits} onToggle={toggleHabit} onAdd={() => setDialogOpen(true)} />
 
       <NewHabitDialog open={dialogOpen} onClose={() => setDialogOpen(false)} onSave={handleAddHabit} />
+
+      {showOnboarding && (
+        <OnboardingModal onDone={() => setShowOnboarding(false)} />
+      )}
     </div>
     </>
   )
