@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, type ElementType } from "react"
 
 import {
   ArrowLeft,
@@ -64,7 +64,7 @@ const CHART_COLORS = [
   "var(--chart-5)",
 ]
 
-const ICON_MAP: Record<string, React.ElementType> = {
+const ICON_MAP: Record<string, ElementType> = {
   book: BookOpen,
   code: Code,
   run: PersonSimpleRun,
@@ -74,13 +74,13 @@ const ICON_MAP: Record<string, React.ElementType> = {
 }
 
 const weekdays = [
-  "M",
-  "T",
-  "O",
-  "T",
-  "F",
-  "L",
-  "S",
+  "Mån",
+  "Tis",
+  "Ons",
+  "Tors",
+  "Fre",
+  "Lör",
+  "Sön",
 ]
 
 type CalendarHabit = {
@@ -88,7 +88,7 @@ type CalendarHabit = {
   storageId: number
   name: string
   time: string
-  icon: React.ElementType
+  icon: ElementType
   color: string
   background: string
 }
@@ -138,7 +138,8 @@ function buildHabitsFromStorage(): CalendarHabit[] {
         ]
 
   return list.map((habit, index) => {
-    const color = CHART_COLORS[index % 5]
+    const color =
+      CHART_COLORS[index % CHART_COLORS.length]
 
     return {
       id: habit.id.toString(),
@@ -152,22 +153,35 @@ function buildHabitsFromStorage(): CalendarHabit[] {
   })
 }
 
-function sameDate(first: Date, second: Date) {
+function sameDate(
+  first: Date,
+  second: Date
+) {
   return (
-    first.getFullYear() === second.getFullYear() &&
-    first.getMonth() === second.getMonth() &&
-    first.getDate() === second.getDate()
+    first.getFullYear() ===
+      second.getFullYear() &&
+    first.getMonth() ===
+      second.getMonth() &&
+    first.getDate() ===
+      second.getDate()
   )
 }
 
-function sameMonth(first: Date, second: Date) {
+function sameMonth(
+  first: Date,
+  second: Date
+) {
   return (
-    first.getFullYear() === second.getFullYear() &&
-    first.getMonth() === second.getMonth()
+    first.getFullYear() ===
+      second.getFullYear() &&
+    first.getMonth() ===
+      second.getMonth()
   )
 }
 
-function normalizeDate(date: Date) {
+function normalizeDate(
+  date: Date
+) {
   return new Date(
     date.getFullYear(),
     date.getMonth(),
@@ -181,7 +195,8 @@ function isHabitCompletedOnDate(
   habitIndex: number,
   habits: CalendarHabit[]
 ) {
-  const habit = habits[habitIndex]
+  const habit =
+    habits[habitIndex]
 
   if (!habit) {
     return false
@@ -213,8 +228,10 @@ function getCompletedCount(
           habits
         )
 
-      return completed +
+      return (
+        completed +
         (habitCompleted ? 1 : 0)
+      )
     },
     0
   )
@@ -223,10 +240,15 @@ function getCompletedCount(
 function isDayCompletedForStreak(
   history: HabitCompletion[],
   date: Date,
-  selectedHabitIndex: number | null,
+  selectedHabitIndex:
+    | number
+    | null,
   habits: CalendarHabit[]
 ) {
-  if (selectedHabitIndex === null) {
+  if (
+    selectedHabitIndex ===
+    null
+  ) {
     return (
       getCompletedCount(
         history,
@@ -247,15 +269,21 @@ function isDayCompletedForStreak(
 function calculateStreak(
   history: HabitCompletion[],
   selectedDate: Date,
-  selectedHabitIndex: number | null,
+  selectedHabitIndex:
+    | number
+    | null,
   today: Date,
   habits: CalendarHabit[]
 ) {
   const normalizedSelectedDate =
-    normalizeDate(selectedDate)
+    normalizeDate(
+      selectedDate
+    )
 
   const normalizedToday =
-    normalizeDate(today)
+    normalizeDate(
+      today
+    )
 
   if (
     normalizedSelectedDate.getTime() >
@@ -267,7 +295,9 @@ function calculateStreak(
   let streak = 0
 
   const dateToCheck =
-    new Date(normalizedSelectedDate)
+    new Date(
+      normalizedSelectedDate
+    )
 
   for (
     let index = 0;
@@ -309,7 +339,9 @@ function createCalendarDays(
     visibleMonth.getMonth()
 
   const normalizedToday =
-    normalizeDate(today)
+    normalizeDate(
+      today
+    )
 
   const firstDayOfMonth =
     new Date(
@@ -348,8 +380,10 @@ function createCalendarDays(
       )
 
     const currentMonth =
-      date.getFullYear() === year &&
-      date.getMonth() === month
+      date.getFullYear() ===
+        year &&
+      date.getMonth() ===
+        month
 
     const isToday =
       sameDate(
@@ -388,15 +422,21 @@ function createCalendarDays(
 function createWeekDays(
   referenceDate: Date,
   today: Date,
-  selectedHabitIndex: number | null,
+  selectedHabitIndex:
+    | number
+    | null,
   history: HabitCompletion[],
   habits: CalendarHabit[]
 ): WeeklyHabitDay[] {
   const normalizedReferenceDate =
-    normalizeDate(referenceDate)
+    normalizeDate(
+      referenceDate
+    )
 
   const normalizedToday =
-    normalizeDate(today)
+    normalizeDate(
+      today
+    )
 
   const dayOffset =
     (
@@ -430,7 +470,8 @@ function createWeekDays(
         normalizedToday.getTime()
 
       let completed = 0
-      let total = habits.length
+      let total =
+        habits.length
 
       if (!future) {
         if (
@@ -457,7 +498,8 @@ function createWeekDays(
               : 0
         }
       } else if (
-        selectedHabitIndex !== null
+        selectedHabitIndex !==
+        null
       ) {
         total = 1
       }
@@ -497,7 +539,9 @@ function ProgressRing({
 }: {
   date: Date
   future: boolean
-  selectedHabitIndex: number | null
+  selectedHabitIndex:
+    | number
+    | null
   history: HabitCompletion[]
   habits: CalendarHabit[]
 }) {
@@ -529,7 +573,7 @@ function ProgressRing({
             habitCompleted
               ? CHART_COLORS[
                   selectedHabitIndex %
-                    5
+                    CHART_COLORS.length
                 ]
               : "var(--muted)",
         }}
@@ -541,7 +585,8 @@ function ProgressRing({
 
   const segmentDeg =
     habits.length > 0
-      ? 360 / habits.length
+      ? 360 /
+        habits.length
       : 360
 
   const segments =
@@ -552,10 +597,12 @@ function ProgressRing({
           index
         ) => {
           const start =
-            index * segmentDeg
+            index *
+            segmentDeg
 
           const end =
-            start + segmentDeg
+            start +
+            segmentDeg
 
           const completed =
             isHabitCompletedOnDate(
@@ -593,7 +640,9 @@ export default function Calendar() {
     new Date()
 
   const normalizedToday =
-    normalizeDate(today)
+    normalizeDate(
+      today
+    )
 
   const currentMonth =
     new Date(
@@ -698,8 +747,10 @@ export default function Calendar() {
       new Intl.DateTimeFormat(
         "sv-SE",
         {
-          month: "long",
-          year: "numeric",
+          month:
+            "long",
+          year:
+            "numeric",
         }
       ).format(
         visibleMonth
@@ -711,9 +762,12 @@ export default function Calendar() {
       new Intl.DateTimeFormat(
         "sv-SE",
         {
-          weekday: "long",
-          day: "numeric",
-          month: "long",
+          weekday:
+            "long",
+          day:
+            "numeric",
+          month:
+            "long",
         }
       ).format(
         selectedDay.date
@@ -798,8 +852,10 @@ export default function Calendar() {
         !date.future
     )
 
-  let monthPercentage: number
-  let monthResultText: string
+  let monthPercentage:
+    number
+  let monthResultText:
+    string
 
   if (
     selectedHabitIndex ===
@@ -915,8 +971,6 @@ export default function Calendar() {
 
   return (
     <>
-      {/* SAMMA HEADERMÖNSTER SOM STARTPAGE */}
-
       <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
         <SidebarTrigger className="-ml-1" />
 
@@ -937,9 +991,9 @@ export default function Calendar() {
       </header>
 
       <div className="w-full min-w-0 max-w-[900px] px-3 pb-6 pt-4 sm:p-6">
-        {/* HEADER */}
+        {/* SIDHUVUD */}
 
-        <header className="mb-5 border-b pb-5 sm:mb-6">
+        <header className="mb-4 sm:mb-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="flex items-start gap-2">
               <div>
@@ -1069,13 +1123,7 @@ export default function Calendar() {
 
         {/* MÅNADSRESULTAT */}
 
-        <section
-          className="mb-5 overflow-hidden rounded-[10px] border border-primary p-4 sm:p-5"
-          style={{
-            background:
-              "radial-gradient(ellipse 117% 80% at 108% 0%, rgba(109,92,246,0.50) 0%, rgba(86,73,212,0.25) 25%, rgba(72,57,194,0.06) 55%, transparent 75%), var(--card)",
-          }}
-        >
+        <section className="mb-5 overflow-hidden rounded-[10px] border border-border bg-card p-4 sm:p-5">
           <div className="flex flex-col gap-5 sm:min-h-[120px] sm:flex-row sm:justify-between sm:gap-8">
             <div>
               <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
@@ -1146,12 +1194,11 @@ export default function Calendar() {
           <div className="grid grid-cols-7 border-b">
             {weekdays.map(
               (
-                weekday,
-                index
+                weekday
               ) => (
                 <div
-                  key={`${weekday}-${index}`}
-                  className="py-2 text-center text-[8px] font-medium tracking-[0.05em] text-muted-foreground sm:py-[10px] sm:text-[10px]"
+                  key={weekday}
+                  className="py-2 text-center text-[8px] font-medium tracking-[0.02em] text-muted-foreground sm:py-[10px] sm:text-[10px]"
                 >
                   {
                     weekday
@@ -1435,9 +1482,7 @@ export default function Calendar() {
                     {selectedDay.future ? (
                       <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
                         <Circle
-                          size={
-                            10
-                          }
+                          size={10}
                         />
 
                         Planerad
@@ -1445,9 +1490,7 @@ export default function Calendar() {
                     ) : completed ? (
                       <div className="flex items-center gap-1 text-[9px] font-medium text-primary">
                         <Check
-                          size={
-                            11
-                          }
+                          size={11}
                           weight="bold"
                         />
 
@@ -1456,9 +1499,7 @@ export default function Calendar() {
                     ) : (
                       <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
                         <Circle
-                          size={
-                            10
-                          }
+                          size={10}
                         />
 
                         Inte klar
