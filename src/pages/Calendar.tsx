@@ -138,7 +138,8 @@ function buildHabitsFromStorage(): CalendarHabit[] {
         ]
 
   return list.map((habit, index) => {
-    const color = CHART_COLORS[index % CHART_COLORS.length]
+    const color =
+      CHART_COLORS[index % CHART_COLORS.length]
 
     return {
       id: habit.id.toString(),
@@ -152,22 +153,35 @@ function buildHabitsFromStorage(): CalendarHabit[] {
   })
 }
 
-function sameDate(first: Date, second: Date) {
+function sameDate(
+  first: Date,
+  second: Date
+) {
   return (
-    first.getFullYear() === second.getFullYear() &&
-    first.getMonth() === second.getMonth() &&
-    first.getDate() === second.getDate()
+    first.getFullYear() ===
+      second.getFullYear() &&
+    first.getMonth() ===
+      second.getMonth() &&
+    first.getDate() ===
+      second.getDate()
   )
 }
 
-function sameMonth(first: Date, second: Date) {
+function sameMonth(
+  first: Date,
+  second: Date
+) {
   return (
-    first.getFullYear() === second.getFullYear() &&
-    first.getMonth() === second.getMonth()
+    first.getFullYear() ===
+      second.getFullYear() &&
+    first.getMonth() ===
+      second.getMonth()
   )
 }
 
-function normalizeDate(date: Date) {
+function normalizeDate(
+  date: Date
+) {
   return new Date(
     date.getFullYear(),
     date.getMonth(),
@@ -181,7 +195,8 @@ function isHabitCompletedOnDate(
   habitIndex: number,
   habits: CalendarHabit[]
 ) {
-  const habit = habits[habitIndex]
+  const habit =
+    habits[habitIndex]
 
   if (!habit) {
     return false
@@ -200,7 +215,11 @@ function getCompletedCount(
   habits: CalendarHabit[]
 ) {
   return habits.reduce(
-    (completed, _habit, habitIndex) => {
+    (
+      completed,
+      _habit,
+      habitIndex
+    ) => {
       const habitCompleted =
         isHabitCompletedOnDate(
           history,
@@ -209,7 +228,10 @@ function getCompletedCount(
           habits
         )
 
-      return completed + (habitCompleted ? 1 : 0)
+      return (
+        completed +
+        (habitCompleted ? 1 : 0)
+      )
     },
     0
   )
@@ -218,10 +240,15 @@ function getCompletedCount(
 function isDayCompletedForStreak(
   history: HabitCompletion[],
   date: Date,
-  selectedHabitIndex: number | null,
+  selectedHabitIndex:
+    | number
+    | null,
   habits: CalendarHabit[]
 ) {
-  if (selectedHabitIndex === null) {
+  if (
+    selectedHabitIndex ===
+    null
+  ) {
     return (
       getCompletedCount(
         history,
@@ -242,15 +269,21 @@ function isDayCompletedForStreak(
 function calculateStreak(
   history: HabitCompletion[],
   selectedDate: Date,
-  selectedHabitIndex: number | null,
+  selectedHabitIndex:
+    | number
+    | null,
   today: Date,
   habits: CalendarHabit[]
 ) {
   const normalizedSelectedDate =
-    normalizeDate(selectedDate)
+    normalizeDate(
+      selectedDate
+    )
 
   const normalizedToday =
-    normalizeDate(today)
+    normalizeDate(
+      today
+    )
 
   if (
     normalizedSelectedDate.getTime() >
@@ -262,7 +295,9 @@ function calculateStreak(
   let streak = 0
 
   const dateToCheck =
-    new Date(normalizedSelectedDate)
+    new Date(
+      normalizedSelectedDate
+    )
 
   for (
     let index = 0;
@@ -304,7 +339,9 @@ function createCalendarDays(
     visibleMonth.getMonth()
 
   const normalizedToday =
-    normalizeDate(today)
+    normalizeDate(
+      today
+    )
 
   const firstDayOfMonth =
     new Date(
@@ -326,7 +363,8 @@ function createCalendarDays(
       1 - mondayOffset
     )
 
-  const calendarDays: CalendarDay[] = []
+  const calendarDays:
+    CalendarDay[] = []
 
   for (
     let index = 0;
@@ -337,12 +375,15 @@ function createCalendarDays(
       new Date(
         gridStart.getFullYear(),
         gridStart.getMonth(),
-        gridStart.getDate() + index
+        gridStart.getDate() +
+          index
       )
 
     const currentMonth =
-      date.getFullYear() === year &&
-      date.getMonth() === month
+      date.getFullYear() ===
+        year &&
+      date.getMonth() ===
+        month
 
     const isToday =
       sameDate(
@@ -381,15 +422,21 @@ function createCalendarDays(
 function createWeekDays(
   referenceDate: Date,
   today: Date,
-  selectedHabitIndex: number | null,
+  selectedHabitIndex:
+    | number
+    | null,
   history: HabitCompletion[],
   habits: CalendarHabit[]
 ): WeeklyHabitDay[] {
   const normalizedReferenceDate =
-    normalizeDate(referenceDate)
+    normalizeDate(
+      referenceDate
+    )
 
   const normalizedToday =
-    normalizeDate(today)
+    normalizeDate(
+      today
+    )
 
   const dayOffset =
     (
@@ -414,7 +461,8 @@ function createWeekDays(
         new Date(
           monday.getFullYear(),
           monday.getMonth(),
-          monday.getDate() + index
+          monday.getDate() +
+            index
         )
 
       const future =
@@ -422,11 +470,13 @@ function createWeekDays(
         normalizedToday.getTime()
 
       let completed = 0
-      let total = habits.length
+      let total =
+        habits.length
 
       if (!future) {
         if (
-          selectedHabitIndex === null
+          selectedHabitIndex ===
+          null
         ) {
           completed =
             getCompletedCount(
@@ -448,7 +498,8 @@ function createWeekDays(
               : 0
         }
       } else if (
-        selectedHabitIndex !== null
+        selectedHabitIndex !==
+        null
       ) {
         total = 1
       }
@@ -488,7 +539,9 @@ function ProgressRing({
 }: {
   date: Date
   future: boolean
-  selectedHabitIndex: number | null
+  selectedHabitIndex:
+    | number
+    | null
   history: HabitCompletion[]
   habits: CalendarHabit[]
 }) {
@@ -501,7 +554,8 @@ function ProgressRing({
   }
 
   if (
-    selectedHabitIndex !== null
+    selectedHabitIndex !==
+    null
   ) {
     const habitCompleted =
       isHabitCompletedOnDate(
@@ -531,7 +585,8 @@ function ProgressRing({
 
   const segmentDeg =
     habits.length > 0
-      ? 360 / habits.length
+      ? 360 /
+        habits.length
       : 360
 
   const segments =
@@ -542,10 +597,12 @@ function ProgressRing({
           index
         ) => {
           const start =
-            index * segmentDeg
+            index *
+            segmentDeg
 
           const end =
-            start + segmentDeg
+            start +
+            segmentDeg
 
           const completed =
             isHabitCompletedOnDate(
@@ -583,7 +640,9 @@ export default function Calendar() {
     new Date()
 
   const normalizedToday =
-    normalizeDate(today)
+    normalizeDate(
+      today
+    )
 
   const currentMonth =
     new Date(
@@ -688,8 +747,10 @@ export default function Calendar() {
       new Intl.DateTimeFormat(
         "sv-SE",
         {
-          month: "long",
-          year: "numeric",
+          month:
+            "long",
+          year:
+            "numeric",
         }
       ).format(
         visibleMonth
@@ -701,9 +762,12 @@ export default function Calendar() {
       new Intl.DateTimeFormat(
         "sv-SE",
         {
-          weekday: "long",
-          day: "numeric",
-          month: "long",
+          weekday:
+            "long",
+          day:
+            "numeric",
+          month:
+            "long",
         }
       ).format(
         selectedDay.date
@@ -788,8 +852,10 @@ export default function Calendar() {
         !date.future
     )
 
-  let monthPercentage: number
-  let monthResultText: string
+  let monthPercentage:
+    number
+  let monthResultText:
+    string
 
   if (
     selectedHabitIndex ===
@@ -927,7 +993,7 @@ export default function Calendar() {
       <div className="w-full min-w-0 max-w-[900px] px-3 pb-6 pt-4 sm:p-6">
         {/* SIDHUVUD */}
 
-        <header className="mb-5 pb-5 sm:mb-6">
+        <header className="mb-4 sm:mb-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="flex items-start gap-2">
               <div>
@@ -1057,7 +1123,7 @@ export default function Calendar() {
 
         {/* MÅNADSRESULTAT */}
 
-        <section className="mb-5 overflow-hidden rounded-[10px] bg-card p-4 sm:p-5">
+        <section className="mb-5 overflow-hidden rounded-[10px] border border-border bg-card p-4 sm:p-5">
           <div className="flex flex-col gap-5 sm:min-h-[120px] sm:flex-row sm:justify-between sm:gap-8">
             <div>
               <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
