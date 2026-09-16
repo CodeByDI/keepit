@@ -1,6 +1,7 @@
 import {
   useMemo,
   useState,
+  type ElementType,
 } from "react"
 
 import {
@@ -11,9 +12,11 @@ import {
 import {
   BarbellIcon,
   BookOpenIcon,
+  CaretDownIcon,
   CheckIcon,
   CodeIcon,
   DropIcon,
+  FireIcon,
   PersonSimpleRunIcon,
 } from "@phosphor-icons/react"
 
@@ -52,59 +55,55 @@ import {
 } from "@/components/ui/card"
 
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+
+import {
+  Input,
+} from "@/components/ui/input"
+
+import {
+  deleteHabit,
   ensureHabitHistorySeeded,
   getHabitCompletion,
+  getHabitList,
   setHabitCompletion,
   toDateKey,
+  updateHabit,
   type HabitCompletion,
+  type StoredHabit,
 } from "@/lib/habit-storage"
 
 // ─────────────────────────────────────────────
-// Habits
-// Same IDs as Calendar and Statistics
+// Habit icons
 // ─────────────────────────────────────────────
 
-const HABITS = [
-  {
-    id: 1,
-    title: "Läs 20 sidor",
-    icon: BookOpenIcon,
-    frequency: "Dagligen",
-    time: "21:00",
-  },
+const ICON_MAP: Record<
+  string,
+  ElementType
+> = {
+  book:
+    BookOpenIcon,
 
-  {
-    id: 2,
-    title: "Koda",
-    icon: CodeIcon,
-    frequency: "Dagligen",
-    time: "20:00",
-  },
+  code:
+    CodeIcon,
 
-  {
-    id: 3,
-    title: "Morgonlöpning",
-    icon: PersonSimpleRunIcon,
-    frequency: "Dagligen",
-    time: "07:00",
-  },
+  run:
+    PersonSimpleRunIcon,
 
-  {
-    id: 4,
-    title: "Träna 30 min",
-    icon: BarbellIcon,
-    frequency: "Dagligen",
-    time: "17:30",
-  },
+  barbell:
+    BarbellIcon,
 
-  {
-    id: 5,
-    title: "Drick 2L vatten",
-    icon: DropIcon,
-    frequency: "Dagligen",
-    time: "20:00",
-  },
-]
+  drop:
+    DropIcon,
+
+  fire:
+    FireIcon,
+}
 
 const HABIT_COLORS = [
   "var(--chart-1)",
@@ -290,7 +289,8 @@ function calculateRecord(
   let current = 0
 
   for (
-    const entry of entries
+    const entry of
+    entries
   ) {
     if (
       entry.completed
@@ -343,6 +343,7 @@ function WeekDot({
 
   return (
     <div className="flex flex-col items-center gap-1.5">
+
       <div
         className="flex size-8 items-center justify-center rounded-full"
         style={{
@@ -391,6 +392,7 @@ function WeekDot({
       >
         {label}
       </span>
+
     </div>
   )
 }
@@ -406,21 +408,94 @@ export function HabitDetailPage() {
   const navigate =
     useNavigate()
 
-  const habit =
-    HABITS.find(
+  // Forces rerender after changing localStorage.
+  const [
+    ,
+    setHabitVersion,
+  ] = useState(0)
+
+  // ───────────────────────────────────────────
+  // Dialog state
+  // ───────────────────────────────────────────
+
+  const [
+    editOpen,
+    setEditOpen,
+  ] = useState(false)
+
+  const [
+    deleteOpen,
+    setDeleteOpen,
+  ] = useState(false)
+
+  const [
+    editTitle,
+    setEditTitle,
+  ] = useState("")
+
+  const [
+    editFrequency,
+    setEditFrequency,
+  ] = useState("Dagligen")
+
+  const [
+    editTime,
+    setEditTime,
+  ] = useState("07:00")
+
+  const [
+    editReminder,
+    setEditReminder,
+  ] = useState("På")
+
+  // ───────────────────────────────────────────
+  // Habit
+  // ───────────────────────────────────────────
+
+  const habitList =
+    getHabitList() ?? []
+
+  const storedHabit =
+    habitList.find(
       (item) =>
         item.id ===
         Number(id)
-    ) ?? HABITS[2]
+    )
+
+  // Fallback keeps hooks stable
+  // if an invalid habit ID is opened.
+  const habit: StoredHabit =
+    storedHabit ?? {
+      id:
+        Number(id) || 0,
+
+      title:
+        "Vanan kunde inte hittas",
+
+      reminder:
+        "",
+
+      streak:
+        0,
+
+      icon:
+        "fire",
+    }
 
   const HabitIcon =
+    ICON_MAP[
     habit.icon
+    ] ??
+    FireIcon
 
   const habitIndex =
-    HABITS.findIndex(
-      (item) =>
-        item.id ===
-        habit.id
+    Math.max(
+      0,
+      habitList.findIndex(
+        (item) =>
+          item.id ===
+          habit.id
+      )
     )
 
   const color =
@@ -429,15 +504,17 @@ export function HabitDetailPage() {
     HABIT_COLORS.length
     ]
 
-  const [today] =
-    useState(() =>
+  const [
+    today,
+  ] = useState(
+    () =>
       normalizeDate(
         new Date()
       )
-    )
+  )
 
   // Same localStorage history
-  // as Calendar + Statistics.
+  // as Start + Calendar + Statistics.
 
   const [
     history,
@@ -445,10 +522,11 @@ export function HabitDetailPage() {
   ] =
     useState<
       HabitCompletion[]
-    >(() =>
-      ensureHabitHistorySeeded(
-        today
-      )
+    >(
+      () =>
+        ensureHabitHistorySeeded(
+          today
+        )
     )
 
   // ───────────────────────────────────────────
@@ -462,18 +540,19 @@ export function HabitDetailPage() {
       today
     )
 
-  const toggleToday = () => {
-    const nextHistory =
-      setHabitCompletion(
-        habit.id,
-        today,
-        !completedToday
-      )
+  const toggleToday =
+    () => {
+      const nextHistory =
+        setHabitCompletion(
+          habit.id,
+          today,
+          !completedToday
+        )
 
-    setHistory(
-      nextHistory
-    )
-  }
+      setHistory(
+        nextHistory
+      )
+    }
 
   // ───────────────────────────────────────────
   // Habit history
@@ -513,7 +592,9 @@ export function HabitDetailPage() {
           today,
           28
         ),
-      [today]
+      [
+        today,
+      ]
     )
 
   const completedLast28 =
@@ -528,8 +609,10 @@ export function HabitDetailPage() {
 
   const average28 =
     Math.round(
-      (completedLast28 /
-        last28Days.length) *
+      (
+        completedLast28 /
+        last28Days.length
+      ) *
       100
     )
 
@@ -681,7 +764,8 @@ export function HabitDetailPage() {
         index
       ) => ({
         label:
-          index % 7 === 0
+          index % 7 ===
+            0
             ? formatShortDate(
               date
             )
@@ -694,7 +778,8 @@ export function HabitDetailPage() {
             date
           ),
 
-        value: 1,
+        value:
+          1,
       })
     )
 
@@ -714,6 +799,181 @@ export function HabitDetailPage() {
       )
       : "start"
 
+  // ───────────────────────────────────────────
+  // Open edit dialog
+  // ───────────────────────────────────────────
+
+  const openEditDialog =
+    () => {
+      const knownFrequencies = [
+        "Dagligen",
+        "Varje vecka",
+        "Vardagar",
+        "Helger",
+      ]
+
+      const frequency =
+        knownFrequencies.find(
+          (value) =>
+            habit.reminder.startsWith(
+              value
+            )
+        ) ??
+        "Dagligen"
+
+      const timeMatch =
+        habit.reminder.match(
+          /\d{2}:\d{2}/
+        )
+
+      const reminderOn =
+        !habit.reminder
+          .toLowerCase()
+          .includes(
+            "ingen påminnelse"
+          )
+
+      setEditTitle(
+        habit.title
+      )
+
+      setEditFrequency(
+        frequency
+      )
+
+      setEditTime(
+        timeMatch?.[0] ??
+        "07:00"
+      )
+
+      setEditReminder(
+        reminderOn
+          ? "På"
+          : "Av"
+      )
+
+      setEditOpen(
+        true
+      )
+    }
+
+  // ───────────────────────────────────────────
+  // Save edited habit
+  // ───────────────────────────────────────────
+
+  const handleSaveEdit =
+    () => {
+      const trimmedTitle =
+        editTitle.trim()
+
+      if (
+        !trimmedTitle
+      ) {
+        return
+      }
+
+      const reminderText =
+        editReminder ===
+          "På"
+          ? `${editFrequency} · ${editTime}`
+          : `${editFrequency} · Ingen påminnelse`
+
+      const updatedHabit:
+        StoredHabit = {
+        ...habit,
+
+        title:
+          trimmedTitle,
+
+        reminder:
+          reminderText,
+      }
+
+      updateHabit(
+        updatedHabit
+      )
+
+      setHabitVersion(
+        (value) =>
+          value + 1
+      )
+
+      setEditOpen(
+        false
+      )
+    }
+
+  // ───────────────────────────────────────────
+  // Delete
+  // ───────────────────────────────────────────
+
+  const handleDelete =
+    () => {
+      deleteHabit(
+        habit.id
+      )
+
+      setDeleteOpen(
+        false
+      )
+
+      navigate(
+        "/statistik"
+      )
+    }
+
+  // ───────────────────────────────────────────
+  // Invalid habit
+  // ───────────────────────────────────────────
+
+  if (
+    !storedHabit
+  ) {
+    return (
+      <>
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+
+          <SidebarTrigger className="-ml-1" />
+
+          <Separator
+            orientation="vertical"
+            className="mr-2 h-4"
+          />
+
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbPage>
+                  Vana saknas
+                </BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+
+        </header>
+
+        <div className="p-6">
+
+          <p className="text-sm text-muted-foreground">
+            Vanan kunde inte hittas.
+          </p>
+
+          <Button
+            className="mt-4"
+            onClick={() =>
+              navigate(
+                "/statistik"
+              )
+            }
+          >
+            Tillbaka till Statistik
+          </Button>
+
+        </div>
+      </>
+    )
+  }
+
   return (
     <>
       {/* Header */}
@@ -732,6 +992,7 @@ export function HabitDetailPage() {
           <BreadcrumbList>
 
             <BreadcrumbItem>
+
               <button
                 type="button"
                 onClick={() =>
@@ -743,6 +1004,7 @@ export function HabitDetailPage() {
               >
                 Statistik
               </button>
+
             </BreadcrumbItem>
 
             <BreadcrumbSeparator />
@@ -759,16 +1021,25 @@ export function HabitDetailPage() {
                 />
 
                 {habit.title}
+
               </BreadcrumbPage>
+
             </BreadcrumbItem>
+
           </BreadcrumbList>
+
         </Breadcrumb>
+
+        {/* Edit + delete */}
 
         <div className="flex items-center gap-2">
 
           <Button
             variant="outline"
             size="sm"
+            onClick={
+              openEditDialog
+            }
           >
             Redigera
           </Button>
@@ -776,10 +1047,17 @@ export function HabitDetailPage() {
           <Button
             variant="destructive"
             size="sm"
+            onClick={() =>
+              setDeleteOpen(
+                true
+              )
+            }
           >
             Ta bort
           </Button>
+
         </div>
+
       </header>
 
       {/* Content */}
@@ -830,6 +1108,7 @@ export function HabitDetailPage() {
                   <span className="text-base font-medium text-muted-foreground">
                     gånger
                   </span>
+
                 </p>
 
                 <p className="text-xs text-muted-foreground opacity-60">
@@ -838,8 +1117,11 @@ export function HabitDetailPage() {
                     historyStart
                   }
                 </p>
+
               </div>
+
             </CardContent>
+
           </Card>
 
           {/* Average */}
@@ -876,13 +1158,17 @@ export function HabitDetailPage() {
                   <span className="text-base font-medium text-muted-foreground">
                     %
                   </span>
+
                 </p>
 
                 <p className="text-xs text-muted-foreground opacity-60">
                   Senaste 28 dagarna
                 </p>
+
               </div>
+
             </CardContent>
+
           </Card>
 
           {/* Record */}
@@ -917,6 +1203,7 @@ export function HabitDetailPage() {
                   <span className="text-base font-medium text-muted-foreground">
                     dagar
                   </span>
+
                 </p>
 
                 <p className="text-xs text-muted-foreground opacity-60">
@@ -925,9 +1212,13 @@ export function HabitDetailPage() {
                     ? `${daysToRecord} dag till nytt rekord`
                     : `${daysToRecord} dagar till nytt rekord`}
                 </p>
+
               </div>
+
             </CardContent>
+
           </Card>
+
         </div>
 
         {/* Current week */}
@@ -950,6 +1241,7 @@ export function HabitDetailPage() {
               }{" "}
               dagar
             </p>
+
           </div>
 
           <div className="flex flex-wrap gap-3">
@@ -975,7 +1267,9 @@ export function HabitDetailPage() {
                 />
               )
             )}
+
           </div>
+
         </div>
 
         {/* History */}
@@ -1001,6 +1295,7 @@ export function HabitDetailPage() {
                 <p className="text-xs text-muted-foreground opacity-60">
                   Senaste 28 dagarna
                 </p>
+
               </div>
 
               <span
@@ -1017,6 +1312,7 @@ export function HabitDetailPage() {
                 }
                 % klarat
               </span>
+
             </div>
 
             <ResponsiveContainer
@@ -1054,6 +1350,7 @@ export function HabitDetailPage() {
                       style={{
                         stopColor:
                           color,
+
                         stopOpacity:
                           1,
                       }}
@@ -1064,11 +1361,14 @@ export function HabitDetailPage() {
                       style={{
                         stopColor:
                           color,
+
                         stopOpacity:
                           0.4,
                       }}
                     />
+
                   </linearGradient>
+
                 </defs>
 
                 <XAxis
@@ -1125,12 +1425,18 @@ export function HabitDetailPage() {
                             : "var(--border)"
                         }
                       />
+
                     )
                   )}
+
                 </Bar>
+
               </BarChart>
+
             </ResponsiveContainer>
+
           </CardContent>
+
         </Card>
 
         {/* Today */}
@@ -1149,22 +1455,17 @@ export function HabitDetailPage() {
 
               <p className="text-sm font-semibold">
                 Idag —{" "}
-                {formatLongDate(
-                  today
-                )}
+                {
+                  formatLongDate(
+                    today
+                  )
+                }
               </p>
 
               <p className="text-xs text-muted-foreground opacity-60">
-                Påminnelse satt
-                till{" "}
-                {
-                  habit.time
-                }{" "}
-                ·{" "}
-                {
-                  habit.frequency
-                }
+                {habit.reminder}
               </p>
+
             </div>
 
             <Button
@@ -1202,10 +1503,327 @@ export function HabitDetailPage() {
               {completedToday
                 ? "Ångra klar"
                 : "Klar för idag"}
+
             </Button>
+
           </CardContent>
+
         </Card>
+
       </div>
+
+      {/* ───────────────────────────────────── */}
+      {/* Edit habit dialog */}
+      {/* ───────────────────────────────────── */}
+
+      <Dialog
+        open={
+          editOpen
+        }
+        onOpenChange={
+          setEditOpen
+        }
+      >
+
+        <DialogContent className="sm:max-w-md border-0 p-6">
+
+          <DialogHeader>
+
+            <DialogTitle
+              className="text-xl font-semibold tracking-tight"
+              style={{
+                color:
+                  "var(--primary)",
+              }}
+            >
+              Redigera vana
+            </DialogTitle>
+
+            <DialogDescription className="flex items-center gap-1 text-sm text-muted-foreground">
+
+              Uppdatera din vana och fortsätt bygga din streak.
+
+              <FireIcon
+                size={14}
+                className="text-primary"
+              />
+
+            </DialogDescription>
+
+          </DialogHeader>
+
+          <div className="mt-3 flex flex-col gap-4">
+
+            {/* Habit name */}
+
+            <div className="flex flex-col gap-2">
+
+              <label className="text-xs font-normal uppercase tracking-widest text-muted-foreground opacity-60">
+
+                Vana{" "}
+
+                <span className="text-primary">
+                  *
+                </span>
+
+              </label>
+
+              <Input
+                value={
+                  editTitle
+                }
+                onChange={
+                  (event) =>
+                    setEditTitle(
+                      event.target.value
+                    )
+                }
+                placeholder="T.ex. Läs tjugo minuter"
+                autoFocus
+                className="h-10 w-full rounded-md border border-input bg-muted/40 px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+
+              <p className="text-xs text-muted-foreground opacity-60">
+                Håll det konkret. Vaga löften håller inte.
+              </p>
+
+            </div>
+
+            {/* Frequency + time */}
+
+            <div className="grid grid-cols-2 gap-3">
+
+              <div className="flex flex-col gap-2">
+
+                <label className="text-xs font-normal uppercase tracking-widest text-muted-foreground opacity-60">
+                  Frekvens
+                </label>
+
+                <div className="relative">
+
+                  <select
+                    value={
+                      editFrequency
+                    }
+                    onChange={
+                      (event) =>
+                        setEditFrequency(
+                          event.target.value
+                        )
+                    }
+                    className="h-10 w-full appearance-none rounded-md border border-input bg-muted/40 px-3 pr-8 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                  >
+
+                    <option>
+                      Dagligen
+                    </option>
+
+                    <option>
+                      Varje vecka
+                    </option>
+
+                    <option>
+                      Vardagar
+                    </option>
+
+                    <option>
+                      Helger
+                    </option>
+
+                  </select>
+
+                  <CaretDownIcon
+                    size={14}
+                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  />
+
+                </div>
+
+              </div>
+
+              <div className="flex flex-col gap-2">
+
+                <label className="text-xs font-normal uppercase tracking-widest text-muted-foreground opacity-60">
+                  Tid på dagen
+                </label>
+
+                <input
+                  type="time"
+                  value={
+                    editTime
+                  }
+                  onChange={
+                    (event) =>
+                      setEditTime(
+                        event.target.value
+                      )
+                  }
+                  className="h-10 w-full rounded-md border border-input bg-muted/40 px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring dark:[color-scheme:dark]"
+                />
+
+              </div>
+
+            </div>
+
+            {/* Reminder */}
+
+            <div className="flex flex-col gap-2">
+
+              <label className="text-xs font-normal uppercase tracking-widest text-muted-foreground opacity-60">
+                Påminnelse
+              </label>
+
+              <div className="relative">
+
+                <select
+                  value={
+                    editReminder
+                  }
+                  onChange={
+                    (event) =>
+                      setEditReminder(
+                        event.target.value
+                      )
+                  }
+                  className="h-10 w-full appearance-none rounded-md border border-input bg-muted/40 px-3 pr-8 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+
+                  <option>
+                    På
+                  </option>
+
+                  <option>
+                    Av
+                  </option>
+
+                </select>
+
+                <CaretDownIcon
+                  size={14}
+                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                />
+
+              </div>
+
+            </div>
+
+            {/* Actions */}
+
+            <div className="flex gap-3">
+
+              <Button
+                variant="ghost"
+                className="flex-1 cursor-pointer text-muted-foreground opacity-60 hover:opacity-100"
+                onClick={() =>
+                  setEditOpen(
+                    false
+                  )
+                }
+              >
+                Avbryt
+              </Button>
+
+              <Button
+                disabled={
+                  !editTitle.trim()
+                }
+                onClick={
+                  handleSaveEdit
+                }
+                className="h-11 flex-1 cursor-pointer transition-opacity hover:opacity-80"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #5649d4 0%, #6d5cf6 45%, #8b5cf6 78%, #f472b6 100%)",
+
+                  color:
+                    "white",
+
+                  border:
+                    "none",
+                }}
+              >
+                Spara ändringar
+              </Button>
+
+            </div>
+
+          </div>
+
+        </DialogContent>
+
+      </Dialog>
+
+      {/* ───────────────────────────────────── */}
+      {/* Delete confirmation dialog */}
+      {/* ───────────────────────────────────── */}
+
+      <Dialog
+        open={
+          deleteOpen
+        }
+        onOpenChange={
+          setDeleteOpen
+        }
+      >
+
+        <DialogContent className="sm:max-w-sm border-0 p-6">
+
+          <DialogHeader>
+
+            <DialogTitle
+              className="text-xl font-semibold tracking-tight"
+              style={{
+                color:
+                  "var(--primary)",
+              }}
+            >
+              Ta bort vana?
+            </DialogTitle>
+
+            <DialogDescription className="text-sm leading-relaxed text-muted-foreground">
+
+              Är du säker på att du vill ta bort{" "}
+
+              <span className="font-medium text-foreground">
+                {habit.title}
+              </span>
+
+              ? All historik för vanan kommer också att tas bort.
+
+            </DialogDescription>
+
+          </DialogHeader>
+
+          <div className="mt-4 flex gap-3">
+
+            <Button
+              variant="ghost"
+              className="flex-1 cursor-pointer text-muted-foreground"
+              onClick={() =>
+                setDeleteOpen(
+                  false
+                )
+              }
+            >
+              Avbryt
+            </Button>
+
+            <Button
+              variant="destructive"
+              className="flex-1 cursor-pointer"
+              onClick={
+                handleDelete
+              }
+            >
+              Ta bort
+            </Button>
+
+          </div>
+
+        </DialogContent>
+
+      </Dialog>
+
     </>
   )
 }
