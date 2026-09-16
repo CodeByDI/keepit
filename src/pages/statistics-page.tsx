@@ -38,6 +38,13 @@ import {
 } from "@/components/ui/separator"
 
 import {
+    Breadcrumb,
+    BreadcrumbItem,
+    BreadcrumbList,
+    BreadcrumbPage,
+} from "@/components/ui/breadcrumb"
+
+import {
     ensureHabitHistorySeeded,
     getHabitCompletion,
     setHabitCompletion,
@@ -749,17 +756,23 @@ export function StatisticsPage() {
         <>
             {/* Application header */}
 
-            <header className="flex h-16 shrink-0 items-center gap-2 border-b px-6">
-                <SidebarTrigger />
+            <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+                <SidebarTrigger className="-ml-1" />
 
                 <Separator
                     orientation="vertical"
-                    className="mx-2 h-4"
+                    className="mr-2 h-4"
                 />
 
-                <span className="text-sm font-semibold">
-                    Statistik
-                </span>
+                <Breadcrumb>
+                    <BreadcrumbList>
+                        <BreadcrumbItem>
+                            <BreadcrumbPage>
+                                Statistik
+                            </BreadcrumbPage>
+                        </BreadcrumbItem>
+                    </BreadcrumbList>
+                </Breadcrumb>
             </header>
 
             {/* Content */}
@@ -772,11 +785,14 @@ export function StatisticsPage() {
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 
                         <div>
-                            <h1 className="text-2xl font-bold tracking-tight text-indigo-400 sm:text-3xl">
+                            <h1
+                                className="text-2xl font-semibold tracking-tight"
+                                style={{ color: "var(--primary)" }}
+                            >
                                 Statistik
                             </h1>
 
-                            <p className="mt-1 text-sm text-muted-foreground">
+                            <p className="text-sm text-muted-foreground opacity-60">
                                 {subtitle}
                             </p>
                         </div>
