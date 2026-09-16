@@ -50,17 +50,17 @@ export function WeeklyHabitView({
     <section className="overflow-hidden rounded-[10px] border bg-card">
       <div className="flex flex-col gap-2 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
         <div>
-          <h2 className="text-xs font-semibold">
+          <h2 className="text-sm font-semibold">
             Veckoöversikt
           </h2>
 
-          <p className="mt-1 text-[9px] text-muted-foreground">
+          <p className="mt-1 text-[10px] text-muted-foreground sm:text-xs">
             Måndag–söndag
           </p>
         </div>
 
         {habitLabel && (
-          <span className="w-fit rounded-full border bg-muted px-2 py-1 text-[8px] text-muted-foreground sm:text-[9px]">
+          <span className="w-fit rounded-full border bg-muted px-2.5 py-1 text-[9px] text-muted-foreground sm:text-[10px]">
             {habitLabel}
           </span>
         )}
@@ -77,8 +77,10 @@ export function WeeklyHabitView({
           const percentage =
             day.total > 0
               ? Math.round(
-                  (day.completed /
-                    day.total) *
+                  (
+                    day.completed /
+                    day.total
+                  ) *
                     100
                 )
               : 0
@@ -93,7 +95,8 @@ export function WeeklyHabitView({
             day.completed ===
             day.total
           ) {
-            status = "Klar"
+            status =
+              "Klar"
           } else if (
             day.completed > 0
           ) {
@@ -128,15 +131,15 @@ export function WeeklyHabitView({
                   : "cursor-pointer hover:bg-muted/40",
               ].join(" ")}
             >
-              <div className="flex min-h-[18px] items-center justify-center">
+              <div className="flex min-h-[20px] items-center justify-center">
                 {day.isToday && (
-                  <span className="rounded-full bg-primary px-1.5 py-[2px] text-[6px] font-semibold text-primary-foreground sm:px-2 sm:text-[7px]">
+                  <span className="rounded-full bg-primary px-1.5 py-[2px] text-[7px] font-semibold text-primary-foreground sm:px-2 sm:text-[8px]">
                     Idag
                   </span>
                 )}
               </div>
 
-              <p className="mt-1 truncate text-[6px] font-medium uppercase tracking-[0.04em] text-muted-foreground sm:text-[8px]">
+              <p className="mt-1 truncate text-[8px] font-semibold uppercase tracking-[0.02em] text-muted-foreground sm:text-[10px]">
                 {getWeekdayLabel(
                   day.date
                 )}
@@ -144,8 +147,8 @@ export function WeeklyHabitView({
 
               <div
                 className={[
-                  "mx-auto mt-2 flex h-6 w-6 items-center justify-center rounded-full border text-[8px] font-semibold",
-                  "sm:h-8 sm:w-8 sm:text-[10px]",
+                  "mx-auto mt-2 flex h-7 w-7 items-center justify-center rounded-full border text-[9px] font-semibold",
+                  "sm:h-9 sm:w-9 sm:text-xs",
 
                   day.isToday
                     ? "border-primary bg-primary text-primary-foreground"
@@ -157,7 +160,7 @@ export function WeeklyHabitView({
 
               <p
                 className={[
-                  "mt-2 truncate text-[6px] sm:text-[8px]",
+                  "mt-2 truncate text-[7px] sm:text-[10px]",
 
                   day.future
                     ? "text-muted-foreground"

@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, type ElementType } from "react"
 
 import {
   ArrowLeft,
@@ -64,7 +64,7 @@ const CHART_COLORS = [
   "var(--chart-5)",
 ]
 
-const ICON_MAP: Record<string, React.ElementType> = {
+const ICON_MAP: Record<string, ElementType> = {
   book: BookOpen,
   code: Code,
   run: PersonSimpleRun,
@@ -74,13 +74,13 @@ const ICON_MAP: Record<string, React.ElementType> = {
 }
 
 const weekdays = [
-  "M",
-  "T",
-  "O",
-  "T",
-  "F",
-  "L",
-  "S",
+  "Mån",
+  "Tis",
+  "Ons",
+  "Tors",
+  "Fre",
+  "Lör",
+  "Sön",
 ]
 
 type CalendarHabit = {
@@ -88,7 +88,7 @@ type CalendarHabit = {
   storageId: number
   name: string
   time: string
-  icon: React.ElementType
+  icon: ElementType
   color: string
   background: string
 }
@@ -138,7 +138,7 @@ function buildHabitsFromStorage(): CalendarHabit[] {
         ]
 
   return list.map((habit, index) => {
-    const color = CHART_COLORS[index % 5]
+    const color = CHART_COLORS[index % CHART_COLORS.length]
 
     return {
       id: habit.id.toString(),
@@ -200,11 +200,7 @@ function getCompletedCount(
   habits: CalendarHabit[]
 ) {
   return habits.reduce(
-    (
-      completed,
-      _habit,
-      habitIndex
-    ) => {
+    (completed, _habit, habitIndex) => {
       const habitCompleted =
         isHabitCompletedOnDate(
           history,
@@ -213,8 +209,7 @@ function getCompletedCount(
           habits
         )
 
-      return completed +
-        (habitCompleted ? 1 : 0)
+      return completed + (habitCompleted ? 1 : 0)
     },
     0
   )
@@ -331,8 +326,7 @@ function createCalendarDays(
       1 - mondayOffset
     )
 
-  const calendarDays:
-    CalendarDay[] = []
+  const calendarDays: CalendarDay[] = []
 
   for (
     let index = 0;
@@ -343,8 +337,7 @@ function createCalendarDays(
       new Date(
         gridStart.getFullYear(),
         gridStart.getMonth(),
-        gridStart.getDate() +
-          index
+        gridStart.getDate() + index
       )
 
     const currentMonth =
@@ -421,8 +414,7 @@ function createWeekDays(
         new Date(
           monday.getFullYear(),
           monday.getMonth(),
-          monday.getDate() +
-            index
+          monday.getDate() + index
         )
 
       const future =
@@ -434,8 +426,7 @@ function createWeekDays(
 
       if (!future) {
         if (
-          selectedHabitIndex ===
-          null
+          selectedHabitIndex === null
         ) {
           completed =
             getCompletedCount(
@@ -510,8 +501,7 @@ function ProgressRing({
   }
 
   if (
-    selectedHabitIndex !==
-    null
+    selectedHabitIndex !== null
   ) {
     const habitCompleted =
       isHabitCompletedOnDate(
@@ -529,7 +519,7 @@ function ProgressRing({
             habitCompleted
               ? CHART_COLORS[
                   selectedHabitIndex %
-                    5
+                    CHART_COLORS.length
                 ]
               : "var(--muted)",
         }}
@@ -915,8 +905,6 @@ export default function Calendar() {
 
   return (
     <>
-      {/* SAMMA HEADERMÖNSTER SOM STARTPAGE */}
-
       <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
         <SidebarTrigger className="-ml-1" />
 
@@ -937,9 +925,9 @@ export default function Calendar() {
       </header>
 
       <div className="w-full min-w-0 max-w-[900px] px-3 pb-6 pt-4 sm:p-6">
-        {/* HEADER */}
+        {/* SIDHUVUD */}
 
-        <header className="mb-5 border-b pb-5 sm:mb-6">
+        <header className="mb-5 pb-5 sm:mb-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="flex items-start gap-2">
               <div>
@@ -1069,13 +1057,7 @@ export default function Calendar() {
 
         {/* MÅNADSRESULTAT */}
 
-        <section
-          className="mb-5 overflow-hidden rounded-[10px] border border-primary p-4 sm:p-5"
-          style={{
-            background:
-              "radial-gradient(ellipse 117% 80% at 108% 0%, rgba(109,92,246,0.50) 0%, rgba(86,73,212,0.25) 25%, rgba(72,57,194,0.06) 55%, transparent 75%), var(--card)",
-          }}
-        >
+        <section className="mb-5 overflow-hidden rounded-[10px] bg-card p-4 sm:p-5">
           <div className="flex flex-col gap-5 sm:min-h-[120px] sm:flex-row sm:justify-between sm:gap-8">
             <div>
               <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
@@ -1146,12 +1128,11 @@ export default function Calendar() {
           <div className="grid grid-cols-7 border-b">
             {weekdays.map(
               (
-                weekday,
-                index
+                weekday
               ) => (
                 <div
-                  key={`${weekday}-${index}`}
-                  className="py-2 text-center text-[8px] font-medium tracking-[0.05em] text-muted-foreground sm:py-[10px] sm:text-[10px]"
+                  key={weekday}
+                  className="py-2 text-center text-[8px] font-medium tracking-[0.02em] text-muted-foreground sm:py-[10px] sm:text-[10px]"
                 >
                   {
                     weekday
@@ -1435,9 +1416,7 @@ export default function Calendar() {
                     {selectedDay.future ? (
                       <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
                         <Circle
-                          size={
-                            10
-                          }
+                          size={10}
                         />
 
                         Planerad
@@ -1445,9 +1424,7 @@ export default function Calendar() {
                     ) : completed ? (
                       <div className="flex items-center gap-1 text-[9px] font-medium text-primary">
                         <Check
-                          size={
-                            11
-                          }
+                          size={11}
                           weight="bold"
                         />
 
@@ -1456,9 +1433,7 @@ export default function Calendar() {
                     ) : (
                       <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
                         <Circle
-                          size={
-                            10
-                          }
+                          size={10}
                         />
 
                         Inte klar
