@@ -75,12 +75,13 @@ function HabitRow({ habit, index, onToggle, readOnly }: { habit: Habit; index: n
   )
 }
 
-export function HabitList({ habits, onToggle, onAdd, readOnly, selectedDateLabel }: {
+export function HabitList({ habits, onToggle, onAdd, readOnly, selectedDateLabel, shortDateLabel }: {
   habits: Habit[]
   onToggle: (id: number) => void
   onAdd?: () => void
   readOnly?: boolean
   selectedDateLabel?: string
+  shortDateLabel?: string
 }) {
   const remaining = habits.filter((h) => !h.done)
   const done = habits.filter((h) => h.done)
@@ -123,28 +124,51 @@ export function HabitList({ habits, onToggle, onAdd, readOnly, selectedDateLabel
         <div className="flex items-center gap-2 rounded-lg border px-3 py-2 text-xs text-muted-foreground"
           style={{ backgroundColor: "var(--muted)" }}>
           <CalendarBlankIcon size={13} />
-          <span>Visar <span className="font-medium text-foreground">{selectedDateLabel}</span> — skrivskyddat</span>
+          <span>Visar <span className="font-medium text-foreground">{selectedDateLabel}</span> — kan inte ändras, datum passerat</span>
         </div>
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-normal uppercase tracking-widest text-muted-foreground opacity-60">
-          {readOnly ? selectedDateLabel ?? "Vald dag" : "Idag"}
-        </p>
-        <div className="flex items-center gap-2">
-          {habits.map((h, i) => {
-            const color = HABIT_COLORS[i % HABIT_COLORS.length]
-            return (
-              <div
-                key={h.id}
-                className="size-3 rounded-full transition-colors"
-                style={{ backgroundColor: h.done ? color : "var(--border)" }}
-              />
-            )
-          })}
-          <span className="text-xs text-muted-foreground ml-1 opacity-60">
+      <div className="flex flex-col gap-1">
+        {/* Row 1: title + date | count */}
+        <div className="flex items-baseline justify-between">
+          <div className="flex items-baseline gap-2">
+            <p className="text-sm font-semibold text-foreground">
+              {readOnly ? "Vald dag" : "Dagens vanor"}
+            </p>
+            {shortDateLabel && (
+              <p className="text-xs text-muted-foreground opacity-60">
+                {shortDateLabel}
+              </p>
+            )}
+          </div>
+          <span className="text-sm font-semibold text-foreground">
             {doneCount} av {habits.length}
+          </span>
+        </div>
+
+        {/* Row 2: progress dots | % klara */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            {[...habits]
+              .sort((a, b) => Number(b.done) - Number(a.done))
+              .map((h) => {
+                const color = HABIT_COLORS[habits.findIndex((x) => x.id === h.id) % HABIT_COLORS.length]
+                return (
+                  <div
+                    key={h.id}
+                    className="rounded-full transition-all"
+                    style={{
+                      width:  h.done ? 10 : 7,
+                      height: h.done ? 10 : 7,
+                      backgroundColor: h.done ? color : "var(--border)",
+                    }}
+                  />
+                )
+              })}
+          </div>
+          <span className="text-xs text-muted-foreground opacity-60">
+            {habits.length > 0 ? Math.round((doneCount / habits.length) * 100) : 0}% klara
           </span>
         </div>
       </div>

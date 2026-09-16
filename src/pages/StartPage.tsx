@@ -240,10 +240,11 @@ export function StartPage() {
         onAdd={() => setDialogOpen(true)}
         readOnly={!isToday}
         selectedDateLabel={
-          !isToday
-            ? selectedDate.toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" })
-                .replace(/^./, (c) => c.toUpperCase())
-            : undefined
+          selectedDate.toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" })
+            .replace(/^./, (c) => c.toUpperCase())
+        }
+        shortDateLabel={
+          selectedDate.toLocaleDateString("sv-SE", { day: "numeric", month: "short" })
         }
       />
 
