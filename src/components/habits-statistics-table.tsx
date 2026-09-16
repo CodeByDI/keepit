@@ -1,6 +1,7 @@
 import {
     useMemo,
     useState,
+    type ElementType,
 } from "react"
 
 import {
@@ -14,7 +15,20 @@ import {
     PersonSimpleRunIcon,
 } from "@phosphor-icons/react"
 
-import type { StatisticsPeriod } from "@/components/statistics-chart"
+import type {
+    StatisticsPeriod,
+} from "@/components/statistics-chart"
+
+import {
+    ensureHabitHistorySeeded,
+    getHabitCompletion,
+    getHabitList,
+    type HabitCompletion,
+} from "@/lib/habit-storage"
+
+// ─────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────
 
 type HabitTrend =
     | "up"
@@ -23,7 +37,9 @@ type HabitTrend =
 
 type Habit = {
     id: number
+
     name: string
+
     streak: number
 
     averages: Record<
@@ -31,10 +47,12 @@ type Habit = {
         number
     >
 
-    icon: typeof PersonSimpleRunIcon
+    icon: ElementType
 
     accentClass: string
+
     iconClass: string
+
     barClass: string
 }
 
@@ -46,20 +64,39 @@ type HabitsStatisticsTableProps = {
     ) => void
 }
 
-const habits: Habit[] = [
+// ─────────────────────────────────────────────
+// Icons
+// ─────────────────────────────────────────────
+
+const ICON_MAP: Record<
+    string,
+    ElementType
+> = {
+    book:
+        BookOpenIcon,
+
+    code:
+        CodeIcon,
+
+    run:
+        PersonSimpleRunIcon,
+
+    barbell:
+        BarbellIcon,
+
+    drop:
+        DropIcon,
+
+    fire:
+        FireIcon,
+}
+
+// ─────────────────────────────────────────────
+// Colors
+// ─────────────────────────────────────────────
+
+const STYLE_PRESETS = [
     {
-        id: 3,
-        name: "Morgonlöpning",
-        streak: 12,
-
-        averages: {
-            "7 dagar": 72,
-            "28 dagar": 68,
-            Allt: 65,
-        },
-
-        icon: PersonSimpleRunIcon,
-
         accentClass:
             "border-l-violet-500",
 
@@ -71,18 +108,6 @@ const habits: Habit[] = [
     },
 
     {
-        id: 4,
-        name: "Träna 30 min",
-        streak: 8,
-
-        averages: {
-            "7 dagar": 66,
-            "28 dagar": 64,
-            Allt: 70,
-        },
-
-        icon: BarbellIcon,
-
         accentClass:
             "border-l-purple-500",
 
@@ -94,18 +119,6 @@ const habits: Habit[] = [
     },
 
     {
-        id: 5,
-        name: "Drick 2L vatten",
-        streak: 5,
-
-        averages: {
-            "7 dagar": 58,
-            "28 dagar": 64,
-            Allt: 61,
-        },
-
-        icon: DropIcon,
-
         accentClass:
             "border-l-indigo-400",
 
@@ -117,18 +130,6 @@ const habits: Habit[] = [
     },
 
     {
-        id: 2,
-        name: "Koda",
-        streak: 1,
-
-        averages: {
-            "7 dagar": 48,
-            "28 dagar": 54,
-            Allt: 57,
-        },
-
-        icon: CodeIcon,
-
         accentClass:
             "border-l-pink-400",
 
@@ -140,18 +141,6 @@ const habits: Habit[] = [
     },
 
     {
-        id: 1,
-        name: "Läs 20 sidor",
-        streak: 3,
-
-        averages: {
-            "7 dagar": 55,
-            "28 dagar": 50,
-            Allt: 52,
-        },
-
-        icon: BookOpenIcon,
-
         accentClass:
             "border-l-fuchsia-400",
 
@@ -163,24 +152,345 @@ const habits: Habit[] = [
     },
 ]
 
-// ─── Trend calculation ──────────────────────────────────
+// ─────────────────────────────────────────────
+// Date helpers
+// ─────────────────────────────────────────────
+
+function normalizeDate(
+    date: Date
+) {
+    return new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate()
+    )
+}
+
+function dateFromKey(
+    dateKey: string
+) {
+    const [
+        year,
+        month,
+        day,
+    ] =
+        dateKey
+            .split("-")
+            .map(Number)
+
+    return new Date(
+        year,
+        month - 1,
+        day
+    )
+}
+
+function getLastDays(
+    endDate: Date,
+    numberOfDays: number
+) {
+    const dates: Date[] = []
+
+    for (
+        let offset =
+            numberOfDays - 1;
+        offset >= 0;
+        offset--
+    ) {
+        const date =
+            new Date(
+                endDate
+            )
+
+        date.setDate(
+            endDate.getDate() -
+            offset
+        )
+
+        dates.push(
+            normalizeDate(
+                date
+            )
+        )
+    }
+
+    return dates
+}
+
+// ─────────────────────────────────────────────
+// Streak
+// ─────────────────────────────────────────────
+
+function calculateStreak(
+    history:
+        HabitCompletion[],
+    habitId:
+        number,
+    today:
+        Date
+) {
+    let streak = 0
+
+    const date =
+        new Date(
+            today
+        )
+
+    while (
+        getHabitCompletion(
+            history,
+            habitId,
+            date
+        )
+    ) {
+        streak++
+
+        date.setDate(
+            date.getDate() -
+            1
+        )
+    }
+
+    return streak
+}
+
+// ─────────────────────────────────────────────
+// Average for X days
+// ─────────────────────────────────────────────
+
+function calculatePeriodAverage(
+    history:
+        HabitCompletion[],
+    habitId:
+        number,
+    today:
+        Date,
+    numberOfDays:
+        number
+) {
+    const dates =
+        getLastDays(
+            today,
+            numberOfDays
+        )
+
+    const completed =
+        dates.filter(
+            (date) =>
+                getHabitCompletion(
+                    history,
+                    habitId,
+                    date
+                )
+        ).length
+
+    return Math.round(
+        (
+            completed /
+            numberOfDays
+        ) *
+        100
+    )
+}
+
+// ─────────────────────────────────────────────
+// Average since first history entry
+// ─────────────────────────────────────────────
+
+function calculateOverallAverage(
+    history:
+        HabitCompletion[],
+    habitId:
+        number,
+    today:
+        Date
+) {
+    const entries =
+        history
+            .filter(
+                (entry) =>
+                    entry.habitId ===
+                    habitId
+            )
+            .sort(
+                (
+                    first,
+                    second
+                ) =>
+                    first.date.localeCompare(
+                        second.date
+                    )
+            )
+
+    if (
+        entries.length === 0
+    ) {
+        return 0
+    }
+
+    const startDate =
+        dateFromKey(
+            entries[0].date
+        )
+
+    const millisecondsPerDay =
+        24 *
+        60 *
+        60 *
+        1000
+
+    const numberOfDays =
+        Math.max(
+            1,
+            Math.floor(
+                (
+                    normalizeDate(
+                        today
+                    ).getTime() -
+                    normalizeDate(
+                        startDate
+                    ).getTime()
+                ) /
+                millisecondsPerDay
+            ) + 1
+        )
+
+    const completed =
+        getLastDays(
+            today,
+            numberOfDays
+        ).filter(
+            (date) =>
+                getHabitCompletion(
+                    history,
+                    habitId,
+                    date
+                )
+        ).length
+
+    return Math.round(
+        (
+            completed /
+            numberOfDays
+        ) *
+        100
+    )
+}
+
+// ─────────────────────────────────────────────
+// Build table habits from localStorage
+// ─────────────────────────────────────────────
+
+function buildHabits(
+    history:
+        HabitCompletion[],
+    today:
+        Date
+): Habit[] {
+    const storedHabits =
+        getHabitList() ?? []
+
+    return storedHabits.map(
+        (
+            storedHabit,
+            index
+        ) => {
+            const style =
+                STYLE_PRESETS[
+                index %
+                STYLE_PRESETS.length
+                ]
+
+            return {
+                id:
+                    storedHabit.id,
+
+                name:
+                    storedHabit.title,
+
+                streak:
+                    calculateStreak(
+                        history,
+                        storedHabit.id,
+                        today
+                    ),
+
+                averages: {
+                    "7 dagar":
+                        calculatePeriodAverage(
+                            history,
+                            storedHabit.id,
+                            today,
+                            7
+                        ),
+
+                    "28 dagar":
+                        calculatePeriodAverage(
+                            history,
+                            storedHabit.id,
+                            today,
+                            28
+                        ),
+
+                    Allt:
+                        calculateOverallAverage(
+                            history,
+                            storedHabit.id,
+                            today
+                        ),
+                },
+
+                icon:
+                    ICON_MAP[
+                    storedHabit.icon
+                    ] ??
+                    FireIcon,
+
+                accentClass:
+                    style.accentClass,
+
+                iconClass:
+                    style.iconClass,
+
+                barClass:
+                    style.barClass,
+            }
+        }
+    )
+}
+
+// ─────────────────────────────────────────────
+// Trend calculation
+// ─────────────────────────────────────────────
 
 function getHabitTrend(
     habit: Habit,
     period: StatisticsPeriod
 ): HabitTrend {
-    let currentValue: number
-    let comparisonValue: number
+    let currentValue:
+        number
 
-    if (period === "7 dagar") {
+    let comparisonValue:
+        number
+
+    if (
+        period ===
+        "7 dagar"
+    ) {
         currentValue =
-            habit.averages["7 dagar"]
+            habit.averages[
+            "7 dagar"
+            ]
 
         comparisonValue =
-            habit.averages["28 dagar"]
+            habit.averages[
+            "28 dagar"
+            ]
     } else {
         currentValue =
-            habit.averages["28 dagar"]
+            habit.averages[
+            "28 dagar"
+            ]
 
         comparisonValue =
             habit.averages.Allt
@@ -190,16 +500,24 @@ function getHabitTrend(
         currentValue -
         comparisonValue
 
-    if (difference > 2) {
+    if (
+        difference > 2
+    ) {
         return "up"
     }
 
-    if (difference < -2) {
+    if (
+        difference < -2
+    ) {
         return "down"
     }
 
     return "stable"
 }
+
+// ─────────────────────────────────────────────
+// Component
+// ─────────────────────────────────────────────
 
 export function HabitsStatisticsTable({
     period,
@@ -210,44 +528,93 @@ export function HabitsStatisticsTable({
         setSortDescending,
     ] = useState(true)
 
-    const sortedHabits =
-        useMemo(() => {
-            return [...habits].sort(
-                (
-                    firstHabit,
-                    secondHabit
-                ) => {
-                    const firstAverage =
-                        firstHabit.averages[
-                        period
-                        ]
-
-                    const secondAverage =
-                        secondHabit.averages[
-                        period
-                        ]
-
-                    return sortDescending
-                        ? secondAverage -
-                        firstAverage
-                        : firstAverage -
-                        secondAverage
-                }
+    const [
+        today,
+    ] = useState(
+        () =>
+            normalizeDate(
+                new Date()
             )
-        }, [
-            period,
-            sortDescending,
-        ])
+    )
+
+    const [
+        history,
+    ] =
+        useState<
+            HabitCompletion[]
+        >(
+            () =>
+                ensureHabitHistorySeeded(
+                    today
+                )
+        )
+
+    // All habits now come from
+    // the same localStorage as Start + Statistics.
+
+    const habits =
+        useMemo(
+            () =>
+                buildHabits(
+                    history,
+                    today
+                ),
+            [
+                history,
+                today,
+            ]
+        )
+
+    const sortedHabits =
+        useMemo(
+            () => {
+                return [
+                    ...habits,
+                ].sort(
+                    (
+                        firstHabit,
+                        secondHabit
+                    ) => {
+                        const firstAverage =
+                            firstHabit
+                                .averages[
+                            period
+                            ]
+
+                        const secondAverage =
+                            secondHabit
+                                .averages[
+                            period
+                            ]
+
+                        return sortDescending
+                            ? secondAverage -
+                            firstAverage
+                            : firstAverage -
+                            secondAverage
+                    }
+                )
+            },
+            [
+                habits,
+                period,
+                sortDescending,
+            ]
+        )
 
     const averageLabel =
-        period === "7 dagar"
+        period ===
+            "7 dagar"
             ? "7-d snitt"
-            : period === "28 dagar"
+            : period ===
+                "28 dagar"
                 ? "28-d snitt"
                 : "Totalt snitt"
 
     return (
         <article className="overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm">
+
+            {/* Header */}
 
             <div className="flex items-center justify-between gap-4 border-b px-4 py-5 sm:px-6">
 
@@ -267,6 +634,7 @@ export function HabitsStatisticsTable({
                     }
                     className="flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
+
                     <span className="hidden min-[430px]:inline">
                         Sorterat efter genomsnitt
                     </span>
@@ -282,14 +650,19 @@ export function HabitsStatisticsTable({
                                 : "rotate-180"
                             }`}
                     />
+
                 </button>
+
             </div>
+
+            {/* Table */}
 
             <div className="overflow-x-auto">
 
                 <table className="w-full border-collapse">
 
                     <thead>
+
                         <tr className="border-b text-left text-xs uppercase tracking-wider text-muted-foreground">
 
                             <th className="px-4 py-4 font-medium sm:px-6">
@@ -309,12 +682,17 @@ export function HabitsStatisticsTable({
                             <th className="hidden px-6 py-4 text-right font-medium sm:table-cell">
                                 Trend
                             </th>
+
                         </tr>
+
                     </thead>
 
                     <tbody>
+
                         {sortedHabits.map(
-                            (habit) => {
+                            (
+                                habit
+                            ) => {
                                 const HabitIcon =
                                     habit.icon
 
@@ -362,6 +740,8 @@ export function HabitsStatisticsTable({
                                         className={`cursor-pointer border-b border-l-4 transition-colors last:border-b-0 hover:bg-muted/40 focus-visible:bg-muted/40 focus-visible:outline-none ${habit.accentClass}`}
                                     >
 
+                                        {/* Habit */}
+
                                         <td className="px-4 py-4 sm:px-6">
 
                                             <div className="flex items-center gap-2 sm:gap-3">
@@ -369,11 +749,13 @@ export function HabitsStatisticsTable({
                                                 <span
                                                     className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${habit.iconClass}`}
                                                 >
+
                                                     <HabitIcon
                                                         size={
                                                             20
                                                         }
                                                     />
+
                                                 </span>
 
                                                 <span className="font-medium">
@@ -381,8 +763,12 @@ export function HabitsStatisticsTable({
                                                         habit.name
                                                     }
                                                 </span>
+
                                             </div>
+
                                         </td>
+
+                                        {/* Streak */}
 
                                         <td className="px-3 py-4 sm:px-6">
 
@@ -401,8 +787,12 @@ export function HabitsStatisticsTable({
                                                         habit.streak
                                                     }
                                                 </span>
+
                                             </div>
+
                                         </td>
+
+                                        {/* Average */}
 
                                         <td className="px-3 py-4 sm:px-6">
 
@@ -413,9 +803,11 @@ export function HabitsStatisticsTable({
                                                     <div
                                                         className={`h-full rounded-full transition-all ${habit.barClass}`}
                                                         style={{
-                                                            width: `${average}%`,
+                                                            width:
+                                                                `${average}%`,
                                                         }}
                                                     />
+
                                                 </div>
 
                                                 <span className="text-sm">
@@ -424,8 +816,12 @@ export function HabitsStatisticsTable({
                                                     }
                                                     %
                                                 </span>
+
                                             </div>
+
                                         </td>
+
+                                        {/* Trend */}
 
                                         <td className="hidden px-6 py-4 text-right sm:table-cell">
 
@@ -463,15 +859,22 @@ export function HabitsStatisticsTable({
                                                                 : "text-muted-foreground"
                                                         }`}
                                                 />
+
                                             </div>
+
                                         </td>
+
                                     </tr>
                                 )
                             }
                         )}
+
                     </tbody>
+
                 </table>
+
             </div>
+
         </article>
     )
 }

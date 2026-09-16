@@ -12,29 +12,16 @@ export type StoredHabit = {
   icon: string
 }
 
-export const HABIT_LIST_STORAGE_KEY = "keepit.habits.v1"
-
-export function getHabitList(): StoredHabit[] | null {
-  if (!hasLocalStorage()) return null
-  const stored = window.localStorage.getItem(HABIT_LIST_STORAGE_KEY)
-  if (!stored) return null
-  try {
-    const parsed = JSON.parse(stored)
-    return Array.isArray(parsed) ? parsed : null
-  } catch {
-    return null
-  }
-}
-
-export function saveHabitList(habits: StoredHabit[]) {
-  if (!hasLocalStorage()) return
-  window.localStorage.setItem(HABIT_LIST_STORAGE_KEY, JSON.stringify(habits))
-}
+export const HABIT_LIST_STORAGE_KEY =
+  "keepit.habits.v1"
 
 export const HABIT_HISTORY_STORAGE_KEY =
   "keepit.habit-completions.v1"
 
-const DEFAULT_COMPLETION_PATTERNS: Record<number, readonly boolean[]> = {
+const DEFAULT_COMPLETION_PATTERNS: Record<
+  number,
+  readonly boolean[]
+> = {
   1: [true, false, true, true, true, true, false],
   2: [false, true, true, false, true, true, true],
   3: [true, true, true, true, false, true, true],
@@ -49,45 +36,173 @@ function hasLocalStorage() {
   )
 }
 
-export function toDateKey(date: Date) {
-  const year = date.getFullYear()
+// ─────────────────────────────────────────────
+// Habit list
+// ─────────────────────────────────────────────
 
-  const month = String(
-    date.getMonth() + 1
-  ).padStart(2, "0")
+export function getHabitList(): StoredHabit[] | null {
+  if (!hasLocalStorage()) {
+    return null
+  }
 
-  const day = String(
-    date.getDate()
-  ).padStart(2, "0")
+  const stored =
+    window.localStorage.getItem(
+      HABIT_LIST_STORAGE_KEY
+    )
+
+  if (!stored) {
+    return null
+  }
+
+  try {
+    const parsed =
+      JSON.parse(stored)
+
+    return Array.isArray(parsed)
+      ? parsed
+      : null
+  } catch {
+    return null
+  }
+}
+
+export function saveHabitList(
+  habits: StoredHabit[]
+) {
+  if (!hasLocalStorage()) {
+    return
+  }
+
+  window.localStorage.setItem(
+    HABIT_LIST_STORAGE_KEY,
+    JSON.stringify(habits)
+  )
+}
+
+export function updateHabit(
+  updatedHabit: StoredHabit
+) {
+  const habits =
+    getHabitList() ?? []
+
+  const updated =
+    habits.map(
+      (habit) =>
+        habit.id ===
+          updatedHabit.id
+          ? updatedHabit
+          : habit
+    )
+
+  saveHabitList(updated)
+
+  return updatedHabit
+}
+
+export function deleteHabit(
+  habitId: number
+) {
+  const habits =
+    getHabitList() ?? []
+
+  const updatedHabits =
+    habits.filter(
+      (habit) =>
+        habit.id !== habitId
+    )
+
+  saveHabitList(
+    updatedHabits
+  )
+
+  // Also remove all statistics/history
+  // belonging to the deleted habit.
+  const history =
+    getHabitHistory()
+
+  const updatedHistory =
+    history.filter(
+      (entry) =>
+        entry.habitId !==
+        habitId
+    )
+
+  saveHabitHistory(
+    updatedHistory
+  )
+
+  return updatedHabits
+}
+
+// ─────────────────────────────────────────────
+// Date helpers
+// ─────────────────────────────────────────────
+
+export function toDateKey(
+  date: Date
+) {
+  const year =
+    date.getFullYear()
+
+  const month =
+    String(
+      date.getMonth() + 1
+    ).padStart(
+      2,
+      "0"
+    )
+
+  const day =
+    String(
+      date.getDate()
+    ).padStart(
+      2,
+      "0"
+    )
 
   return `${year}-${month}-${day}`
 }
 
-function getPatternIndex(date: Date) {
-  const dateUtc = Date.UTC(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate()
-  )
+function getPatternIndex(
+  date: Date
+) {
+  const dateUtc =
+    Date.UTC(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate()
+    )
 
-  const epochUtc = Date.UTC(
-    2026,
-    0,
-    1
-  )
+  const epochUtc =
+    Date.UTC(
+      2026,
+      0,
+      1
+    )
 
   const millisecondsPerDay =
     24 * 60 * 60 * 1000
 
-  const difference = Math.floor(
-    (dateUtc - epochUtc) /
+  const difference =
+    Math.floor(
+      (dateUtc -
+        epochUtc) /
       millisecondsPerDay
-  )
+    )
 
-  return ((difference % 7) + 7) % 7
+  return (
+    ((difference % 7) +
+      7) %
+    7
+  )
 }
 
-export function getHabitHistory(): HabitCompletion[] {
+// ─────────────────────────────────────────────
+// Habit history
+// ─────────────────────────────────────────────
+
+export function getHabitHistory():
+  HabitCompletion[] {
   if (!hasLocalStorage()) {
     return []
   }
@@ -102,9 +217,12 @@ export function getHabitHistory(): HabitCompletion[] {
   }
 
   try {
-    const parsed = JSON.parse(stored)
+    const parsed =
+      JSON.parse(stored)
 
-    if (!Array.isArray(parsed)) {
+    if (
+      !Array.isArray(parsed)
+    ) {
       return []
     }
 
@@ -112,11 +230,15 @@ export function getHabitHistory(): HabitCompletion[] {
       (
         item
       ): item is HabitCompletion =>
-        typeof item === "object" &&
+        typeof item ===
+        "object" &&
         item !== null &&
-        typeof item.habitId === "number" &&
-        typeof item.date === "string" &&
-        typeof item.completed === "boolean"
+        typeof item.habitId ===
+        "number" &&
+        typeof item.date ===
+        "string" &&
+        typeof item.completed ===
+        "boolean"
     )
   } catch {
     return []
@@ -141,14 +263,18 @@ export function getHabitCompletion(
   habitId: number,
   date: Date
 ) {
-  const dateKey = toDateKey(date)
+  const dateKey =
+    toDateKey(date)
 
   return (
     history.find(
       (entry) =>
-        entry.habitId === habitId &&
-        entry.date === dateKey
-    )?.completed ?? false
+        entry.habitId ===
+        habitId &&
+        entry.date ===
+        dateKey
+    )?.completed ??
+    false
   )
 }
 
@@ -157,41 +283,57 @@ export function setHabitCompletion(
   date: Date,
   completed: boolean
 ) {
-  const history = getHabitHistory()
+  const history =
+    getHabitHistory()
 
-  const dateKey = toDateKey(date)
+  const dateKey =
+    toDateKey(date)
 
   const existingIndex =
     history.findIndex(
       (entry) =>
-        entry.habitId === habitId &&
-        entry.date === dateKey
+        entry.habitId ===
+        habitId &&
+        entry.date ===
+        dateKey
     )
 
-  let nextHistory: HabitCompletion[]
+  let nextHistory:
+    HabitCompletion[]
 
-  if (existingIndex === -1) {
+  if (
+    existingIndex ===
+    -1
+  ) {
     nextHistory = [
       ...history,
       {
         habitId,
-        date: dateKey,
+        date:
+          dateKey,
         completed,
       },
     ]
   } else {
-    nextHistory = history.map(
-      (entry, index) =>
-        index === existingIndex
-          ? {
+    nextHistory =
+      history.map(
+        (
+          entry,
+          index
+        ) =>
+          index ===
+            existingIndex
+            ? {
               ...entry,
               completed,
             }
-          : entry
-    )
+            : entry
+      )
   }
 
-  saveHabitHistory(nextHistory)
+  saveHabitHistory(
+    nextHistory
+  )
 
   return nextHistory
 }
@@ -200,20 +342,35 @@ export function getHabitHistoryBetween(
   startDate: Date,
   endDate: Date
 ) {
-  const history = getHabitHistory()
+  const history =
+    getHabitHistory()
 
-  const startKey = toDateKey(startDate)
-  const endKey = toDateKey(endDate)
+  const startKey =
+    toDateKey(
+      startDate
+    )
+
+  const endKey =
+    toDateKey(
+      endDate
+    )
 
   return history.filter(
     (entry) =>
-      entry.date >= startKey &&
-      entry.date <= endKey
+      entry.date >=
+      startKey &&
+      entry.date <=
+      endKey
   )
 }
 
+// ─────────────────────────────────────────────
+// Demo history
+// ─────────────────────────────────────────────
+
 export function ensureHabitHistorySeeded(
-  referenceDate = new Date()
+  referenceDate =
+    new Date()
 ) {
   if (!hasLocalStorage()) {
     return []
@@ -224,11 +381,14 @@ export function ensureHabitHistorySeeded(
       HABIT_HISTORY_STORAGE_KEY
     )
 
-  if (existing !== null) {
+  if (
+    existing !== null
+  ) {
     return getHabitHistory()
   }
 
-  const history: HabitCompletion[] = []
+  const history:
+    HabitCompletion[] = []
 
   const startDate =
     new Date(
@@ -238,17 +398,23 @@ export function ensureHabitHistorySeeded(
     )
 
   startDate.setDate(
-    startDate.getDate() - 364
+    startDate.getDate() -
+    364
   )
 
   const currentDate =
-    new Date(startDate)
+    new Date(
+      startDate
+    )
 
   while (
-    currentDate <= referenceDate
+    currentDate <=
+    referenceDate
   ) {
     const patternIndex =
-      getPatternIndex(currentDate)
+      getPatternIndex(
+        currentDate
+      )
 
     for (
       const habitId of [
@@ -261,23 +427,34 @@ export function ensureHabitHistorySeeded(
     ) {
       const pattern =
         DEFAULT_COMPLETION_PATTERNS[
-          habitId
+        habitId
         ]
 
       history.push({
         habitId,
-        date: toDateKey(currentDate),
+
+        date:
+          toDateKey(
+            currentDate
+          ),
+
         completed:
-          pattern[patternIndex] ?? false,
+          pattern[
+          patternIndex
+          ] ??
+          false,
       })
     }
 
     currentDate.setDate(
-      currentDate.getDate() + 1
+      currentDate.getDate() +
+      1
     )
   }
 
-  saveHabitHistory(history)
+  saveHabitHistory(
+    history
+  )
 
   return history
 }
