@@ -6,9 +6,19 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { CaretDownIcon, FireIcon } from "@phosphor-icons/react"
+import { FireIcon } from "@phosphor-icons/react"
+
+const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"))
+const MINUTES = ["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"]
 
 type NewHabitDialogProps = {
   open: boolean
@@ -19,12 +29,13 @@ type NewHabitDialogProps = {
 export function NewHabitDialog({ open, onClose, onSave }: NewHabitDialogProps) {
   const [title, setTitle] = useState("")
   const [frequency, setFrequency] = useState("Dagligen")
-  const [time, setTime] = useState("07:00")
+  const [hour, setHour] = useState("07")
+  const [minute, setMinute] = useState("00")
   const [reminder, setReminder] = useState("På")
 
   function handleSave() {
     if (!title.trim()) return
-    const reminderText = reminder === "På" ? `${frequency} · ${time}` : "Ingen påminnelse"
+    const reminderText = reminder === "På" ? `${frequency} · ${hour}:${minute}` : "Ingen påminnelse"
     onSave?.(title.trim(), reminderText)
     handleCancel()
   }
@@ -32,7 +43,8 @@ export function NewHabitDialog({ open, onClose, onSave }: NewHabitDialogProps) {
   function handleCancel() {
     setTitle("")
     setFrequency("Dagligen")
-    setTime("07:00")
+    setHour("07")
+    setMinute("00")
     setReminder("På")
     onClose()
   }
@@ -40,11 +52,10 @@ export function NewHabitDialog({ open, onClose, onSave }: NewHabitDialogProps) {
   const labelClass = "text-xs font-normal uppercase tracking-widest text-muted-foreground opacity-60"
   const fieldClass =
     "w-full h-10 rounded-md border border-input bg-muted/40 px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-  const selectFieldClass = `${fieldClass} appearance-none pr-8`
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleCancel()}>
-      <DialogContent className="sm:max-w-md border-0 p-6">
+      <DialogContent className="sm:max-w-sm border-0 p-6">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold tracking-tight" style={{ color: "var(--primary)" }}>Ny vana</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground flex items-center gap-1">
@@ -74,45 +85,58 @@ export function NewHabitDialog({ open, onClose, onSave }: NewHabitDialogProps) {
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-2">
               <label className={labelClass}>Frekvens</label>
-              <div className="relative">
-                <select
-                  value={frequency}
-                  onChange={(e) => setFrequency(e.target.value)}
-                  className={selectFieldClass}
-                >
-                  <option>Dagligen</option>
-                  <option>Varje vecka</option>
-                  <option>Vardagar</option>
-                  <option>Helger</option>
-                </select>
-                <CaretDownIcon size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-              </div>
+              <Select value={frequency} onValueChange={setFrequency}>
+                <SelectTrigger className="h-10 bg-muted/40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Dagligen">Dagligen</SelectItem>
+                  <SelectItem value="Varje vecka">Varje vecka</SelectItem>
+                  <SelectItem value="Vardagar">Vardagar</SelectItem>
+                  <SelectItem value="Helger">Helger</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex flex-col gap-2">
-              <label className={labelClass}>Tid på dagen</label>
-              <input
-                type="time"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-                className={`${fieldClass} dark:[color-scheme:dark]`}
-              />
+              <label className={`${labelClass} whitespace-nowrap`}>Tid på dagen</label>
+              <div className="flex items-center gap-1.5">
+                <Select value={hour} onValueChange={setHour}>
+                  <SelectTrigger className="h-10 bg-muted/40 flex-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-48" alignItemWithTrigger={false}>
+                    {HOURS.map((h) => (
+                      <SelectItem key={h} value={h}>{h}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <span className="text-sm text-muted-foreground">:</span>
+                <Select value={minute} onValueChange={setMinute}>
+                  <SelectTrigger className="h-10 bg-muted/40 flex-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-48" alignItemWithTrigger={false}>
+                    {MINUTES.map((m) => (
+                      <SelectItem key={m} value={m}>{m}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
           {/* Reminder */}
           <div className="flex flex-col gap-2">
             <label className={labelClass}>Påminnelse</label>
-            <div className="relative">
-              <select
-                value={reminder}
-                onChange={(e) => setReminder(e.target.value)}
-                className={selectFieldClass}
-              >
-                <option>På</option>
-                <option>Av</option>
-              </select>
-              <CaretDownIcon size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-            </div>
+            <Select value={reminder} onValueChange={setReminder}>
+              <SelectTrigger className="h-10 w-full bg-muted/40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="På">På</SelectItem>
+                <SelectItem value="Av">Av</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Actions */}
