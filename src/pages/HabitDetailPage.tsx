@@ -12,7 +12,6 @@ import {
 import {
   BarbellIcon,
   BookOpenIcon,
-  CaretDownIcon,
   CheckIcon,
   CodeIcon,
   DropIcon,
@@ -65,6 +64,17 @@ import {
 import {
   Input,
 } from "@/components/ui/input"
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+
+const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"))
+const MINUTES = ["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"]
 
 import {
   deleteHabit,
@@ -1525,7 +1535,7 @@ export function HabitDetailPage() {
         }
       >
 
-        <DialogContent className="sm:max-w-md border-0 p-6">
+        <DialogContent className="sm:max-w-sm border-0 p-6">
 
           <DialogHeader>
 
@@ -1594,73 +1604,55 @@ export function HabitDetailPage() {
             <div className="grid grid-cols-2 gap-3">
 
               <div className="flex flex-col gap-2">
-
                 <label className="text-xs font-normal uppercase tracking-widest text-muted-foreground opacity-60">
                   Frekvens
                 </label>
-
-                <div className="relative">
-
-                  <select
-                    value={
-                      editFrequency
-                    }
-                    onChange={
-                      (event) =>
-                        setEditFrequency(
-                          event.target.value
-                        )
-                    }
-                    className="h-10 w-full appearance-none rounded-md border border-input bg-muted/40 px-3 pr-8 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                  >
-
-                    <option>
-                      Dagligen
-                    </option>
-
-                    <option>
-                      Varje vecka
-                    </option>
-
-                    <option>
-                      Vardagar
-                    </option>
-
-                    <option>
-                      Helger
-                    </option>
-
-                  </select>
-
-                  <CaretDownIcon
-                    size={14}
-                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                  />
-
-                </div>
-
+                <Select value={editFrequency} onValueChange={setEditFrequency}>
+                  <SelectTrigger className="h-10 bg-muted/40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Dagligen">Dagligen</SelectItem>
+                    <SelectItem value="Varje vecka">Varje vecka</SelectItem>
+                    <SelectItem value="Vardagar">Vardagar</SelectItem>
+                    <SelectItem value="Helger">Helger</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="flex flex-col gap-2">
-
-                <label className="text-xs font-normal uppercase tracking-widest text-muted-foreground opacity-60">
+                <label className="text-xs font-normal uppercase tracking-widest text-muted-foreground opacity-60 whitespace-nowrap">
                   Tid på dagen
                 </label>
-
-                <input
-                  type="time"
-                  value={
-                    editTime
-                  }
-                  onChange={
-                    (event) =>
-                      setEditTime(
-                        event.target.value
-                      )
-                  }
-                  className="h-10 w-full rounded-md border border-input bg-muted/40 px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring dark:[color-scheme:dark]"
-                />
-
+                <div className="flex items-center gap-1.5">
+                  <Select
+                    value={editTime.split(":")[0]}
+                    onValueChange={(h) => setEditTime(`${h}:${editTime.split(":")[1]}`)}
+                  >
+                    <SelectTrigger className="h-10 bg-muted/40 flex-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-48" alignItemWithTrigger={false}>
+                      {HOURS.map((h) => (
+                        <SelectItem key={h} value={h}>{h}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <span className="text-sm text-muted-foreground">:</span>
+                  <Select
+                    value={editTime.split(":")[1]}
+                    onValueChange={(m) => setEditTime(`${editTime.split(":")[0]}:${m}`)}
+                  >
+                    <SelectTrigger className="h-10 bg-muted/40 flex-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-48" alignItemWithTrigger={false}>
+                      {MINUTES.map((m) => (
+                        <SelectItem key={m} value={m}>{m}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
             </div>
@@ -1673,37 +1665,15 @@ export function HabitDetailPage() {
                 Påminnelse
               </label>
 
-              <div className="relative">
-
-                <select
-                  value={
-                    editReminder
-                  }
-                  onChange={
-                    (event) =>
-                      setEditReminder(
-                        event.target.value
-                      )
-                  }
-                  className="h-10 w-full appearance-none rounded-md border border-input bg-muted/40 px-3 pr-8 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                >
-
-                  <option>
-                    På
-                  </option>
-
-                  <option>
-                    Av
-                  </option>
-
-                </select>
-
-                <CaretDownIcon
-                  size={14}
-                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                />
-
-              </div>
+              <Select value={editReminder} onValueChange={setEditReminder}>
+                <SelectTrigger className="h-10 w-full bg-muted/40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="På">På</SelectItem>
+                  <SelectItem value="Av">Av</SelectItem>
+                </SelectContent>
+              </Select>
 
             </div>
 
