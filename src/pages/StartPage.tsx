@@ -239,6 +239,7 @@ export function StartPage() {
         onToggle={toggleHabit}
         onAdd={() => setDialogOpen(true)}
         readOnly={!isToday}
+        isFuture={selectedDate > today}
         selectedDateLabel={
           selectedDate.toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" })
             .replace(/^./, (c) => c.toUpperCase())

@@ -75,11 +75,12 @@ function HabitRow({ habit, index, onToggle, readOnly }: { habit: Habit; index: n
   )
 }
 
-export function HabitList({ habits, onToggle, onAdd, readOnly, selectedDateLabel, shortDateLabel }: {
+export function HabitList({ habits, onToggle, onAdd, readOnly, isFuture, selectedDateLabel, shortDateLabel }: {
   habits: Habit[]
   onToggle: (id: number) => void
   onAdd?: () => void
   readOnly?: boolean
+  isFuture?: boolean
   selectedDateLabel?: string
   shortDateLabel?: string
 }) {
@@ -124,7 +125,7 @@ export function HabitList({ habits, onToggle, onAdd, readOnly, selectedDateLabel
         <div className="flex items-center gap-2 rounded-lg border px-3 py-2 text-xs text-muted-foreground"
           style={{ backgroundColor: "var(--muted)" }}>
           <CalendarBlankIcon size={13} />
-          <span>Visar <span className="font-medium text-foreground">{selectedDateLabel}</span> — kan inte ändras, datum passerat</span>
+          <span>Visar <span className="font-medium text-foreground">{selectedDateLabel}</span> — kan inte ändras, {isFuture ? "datum i framtiden" : "datum passerat"}</span>
         </div>
       )}
 
