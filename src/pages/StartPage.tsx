@@ -21,7 +21,7 @@ import {
 
 // ─── Static data (replace with API later) ─────────────────────────────────────
 
-const WEEK_LABELS = ["M", "T", "O", "T", "F", "L", "S"]
+const WEEK_LABELS = ["Mån", "Tis", "Ons", "Tors", "Fre", "Lör", "Sön"]
 
 // ─── Streak helpers ────────────────────────────────────────────────────────────
 
