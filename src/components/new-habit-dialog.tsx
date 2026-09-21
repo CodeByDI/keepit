@@ -85,7 +85,7 @@ export function NewHabitDialog({ open, onClose, onSave }: NewHabitDialogProps) {
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-2">
               <label className={labelClass}>Frekvens</label>
-              <Select value={frequency} onValueChange={setFrequency}>
+              <Select value={frequency} onValueChange={(v) => v !== null && setFrequency(v)}>
                 <SelectTrigger className="h-10 bg-muted/40">
                   <SelectValue />
                 </SelectTrigger>
@@ -100,7 +100,7 @@ export function NewHabitDialog({ open, onClose, onSave }: NewHabitDialogProps) {
             <div className="flex flex-col gap-2">
               <label className={`${labelClass} whitespace-nowrap`}>Tid på dagen</label>
               <div className="flex items-center gap-1.5">
-                <Select value={hour} onValueChange={setHour}>
+                <Select value={hour} onValueChange={(v) => v !== null && setHour(v)}>
                   <SelectTrigger className="h-10 bg-muted/40 flex-1">
                     <SelectValue />
                   </SelectTrigger>
@@ -111,7 +111,7 @@ export function NewHabitDialog({ open, onClose, onSave }: NewHabitDialogProps) {
                   </SelectContent>
                 </Select>
                 <span className="text-sm text-muted-foreground">:</span>
-                <Select value={minute} onValueChange={setMinute}>
+                <Select value={minute} onValueChange={(v) => v !== null && setMinute(v)}>
                   <SelectTrigger className="h-10 bg-muted/40 flex-1">
                     <SelectValue />
                   </SelectTrigger>
@@ -128,7 +128,7 @@ export function NewHabitDialog({ open, onClose, onSave }: NewHabitDialogProps) {
           {/* Reminder */}
           <div className="flex flex-col gap-2">
             <label className={labelClass}>Påminnelse</label>
-            <Select value={reminder} onValueChange={setReminder}>
+            <Select value={reminder} onValueChange={(v) => v !== null && setReminder(v)}>
               <SelectTrigger className="h-10 w-full bg-muted/40">
                 <SelectValue />
               </SelectTrigger>

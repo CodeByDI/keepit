@@ -1607,7 +1607,7 @@ export function HabitDetailPage() {
                 <label className="text-xs font-normal uppercase tracking-widest text-muted-foreground opacity-60">
                   Frekvens
                 </label>
-                <Select value={editFrequency} onValueChange={setEditFrequency}>
+                <Select value={editFrequency} onValueChange={(v) => v !== null && setEditFrequency(v)}>
                   <SelectTrigger className="h-10 bg-muted/40">
                     <SelectValue />
                   </SelectTrigger>
@@ -1627,7 +1627,7 @@ export function HabitDetailPage() {
                 <div className="flex items-center gap-1.5">
                   <Select
                     value={editTime.split(":")[0]}
-                    onValueChange={(h) => setEditTime(`${h}:${editTime.split(":")[1]}`)}
+                    onValueChange={(h) => h !== null && setEditTime(`${h}:${editTime.split(":")[1]}`)}
                   >
                     <SelectTrigger className="h-10 bg-muted/40 flex-1">
                       <SelectValue />
@@ -1641,7 +1641,7 @@ export function HabitDetailPage() {
                   <span className="text-sm text-muted-foreground">:</span>
                   <Select
                     value={editTime.split(":")[1]}
-                    onValueChange={(m) => setEditTime(`${editTime.split(":")[0]}:${m}`)}
+                    onValueChange={(m) => m !== null && setEditTime(`${editTime.split(":")[0]}:${m}`)}
                   >
                     <SelectTrigger className="h-10 bg-muted/40 flex-1">
                       <SelectValue />
@@ -1665,7 +1665,7 @@ export function HabitDetailPage() {
                 Påminnelse
               </label>
 
-              <Select value={editReminder} onValueChange={setEditReminder}>
+              <Select value={editReminder} onValueChange={(v) => v !== null && setEditReminder(v)}>
                 <SelectTrigger className="h-10 w-full bg-muted/40">
                   <SelectValue />
                 </SelectTrigger>
