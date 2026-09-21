@@ -46,7 +46,7 @@ export function StreakCard({ current, record, daysLeft, habitName, HabitIcon }: 
           <div className="flex justify-end text-xs opacity-60">
             {daysLeft > 0 ? (
               <span className="flex items-center gap-1">
-                {daysLeft} dagar till rekord i {habitName} <TrophyIcon size={13} />
+                {daysLeft} {daysLeft === 1 ? "dag" : "dagar"} till rekord i {habitName} <TrophyIcon size={13} />
               </span>
             ) : (
               <span className="flex items-center gap-1">
