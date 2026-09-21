@@ -34,22 +34,20 @@ function AppLayout() {
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="system" storageKey="keepit-theme">
-      <Routes>
-        {/* Login - No sidebar */}
-        <Route path="/login" element={<LoginPage />} />
+    <Routes>
+      {/* Login - No sidebar */}
+      <Route path="/login" element={<LoginPage />} />
 
-        {/* Protected routes - With sidebar */}
-        <Route
-          path="/*"
-          element={
-            <ProtectedRoute>
-              <AppLayout />
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
-    </ThemeProvider>
+      {/* Protected routes - With sidebar */}
+      <Route
+        path="/*"
+        element={
+          <ProtectedRoute>
+            <AppLayout />
+          </ProtectedRoute>
+        }
+      />
+    </Routes>
   )
 }
 export default App
