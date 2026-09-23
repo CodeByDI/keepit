@@ -11,26 +11,52 @@ import {
   SignOutIcon,
   PencilSimpleIcon,
   CaretRightIcon,
+  BookOpenIcon,
+  CodeIcon,
+  PersonSimpleRunIcon,
+  BarbellIcon,
+  DropIcon,
+  PlusIcon,
 } from "@phosphor-icons/react"
 import { useNavigate } from "react-router-dom"
 import { EditProfileDialog } from "@/components/edit-profile-dialog"
+import { useHabitStats } from "@/lib/habit-stats"
 
 // ─── Default user data ─────────────────────────────────────────────────────
 const defaultUser = {
   name: "Maja Lindström",
   email: "maja@example.se",
   memberSince: "aug 2026",
-  streak: 12,
-  habits: 5,
   avatar: "ML",
   password: "MajaÄrBäst123",
 }
+
+// ─── Icon map (matches StartPage) ──────────────────────────────────────────
+const ICON_MAP: Record<string, React.ElementType> = {
+  book: BookOpenIcon,
+  code: CodeIcon,
+  run: PersonSimpleRunIcon,
+  barbell: BarbellIcon,
+  drop: DropIcon,
+  fire: PlusIcon,
+}
+
+const CHART_COLORS = [
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
+]
 
 // ─── Profile Page ─────────────────────────────────────────────────────────
 export function ProfilePage() {
   const navigate = useNavigate()
   const [isLogoutHovered, setIsLogoutHovered] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+
+  // ─── Real habit stats (synced with StartPage via localStorage) ──
+  const stats = useHabitStats()
 
   // ─── User state (from localStorage) ──
   const [user, setUser] = useState(() => {
@@ -67,17 +93,16 @@ export function ProfilePage() {
     localStorage.setItem("user", JSON.stringify(updatedUser))
     setUser(updatedUser)
 
-    // ─── 🔥 Notify NavUser about the update ──
+    // Notify NavUser about the update
     window.dispatchEvent(new Event("userUpdated"))
 
-    // ─── Keep login session active ──
+    // Keep login session active
     localStorage.setItem("isLoggedIn", "true")
   }
 
   // ─── Logout: Keep user data, only remove session ──
   const handleLogout = () => {
     console.log("🚪 Logging out...")
-    // ✅ Keep user data, just remove login session
     localStorage.removeItem("isLoggedIn")
     navigate("/login")
   }
@@ -163,7 +188,7 @@ export function ProfilePage() {
 
             <Separator className="my-4" />
 
-            {/* Mini stats */}
+            {/* Mini stats — real data */}
             <div className="grid grid-cols-2 gap-2 w-full relative z-10">
               <div
                 className="text-center p-2 rounded-md"
@@ -172,7 +197,9 @@ export function ProfilePage() {
                   borderColor: "var(--border)",
                 }}
               >
-                <div className="text-lg font-bold text-foreground">{user.streak}</div>
+                <div className="text-lg font-bold text-foreground">
+                  {stats.bestCurrentStreak}
+                </div>
                 <div className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Streak</div>
               </div>
               <div
@@ -182,39 +209,39 @@ export function ProfilePage() {
                   borderColor: "var(--border)",
                 }}
               >
-                <div className="text-lg font-bold text-foreground">{user.habits}</div>
+                <div className="text-lg font-bold text-foreground">
+                  {stats.totalHabits}
+                </div>
                 <div className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Vanor</div>
               </div>
             </div>
 
             <Separator className="my-4" />
 
-            {/* Active habits list */}
+            {/* Active habits — real data */}
             <div className="w-full relative z-10">
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground/60 mb-2">
                 Aktiva vanor
               </div>
               <div className="flex flex-col gap-1.5">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span className="w-2 h-2 rounded-full" style={{ background: "var(--chart-1)" }} />
-                  Morgonlöpning
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span className="w-2 h-2 rounded-full" style={{ background: "var(--chart-2)" }} />
-                  Träna 30 min
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span className="w-2 h-2 rounded-full" style={{ background: "var(--chart-3)" }} />
-                  Drick 2L vatten
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span className="w-2 h-2 rounded-full" style={{ background: "var(--chart-4)" }} />
-                  Läs 20 sidor
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span className="w-2 h-2 rounded-full" style={{ background: "var(--chart-5)" }} />
-                  Koda
-                </div>
+                {stats.habits.length === 0 ? (
+                  <div className="text-sm text-muted-foreground/60 italic">
+                    Inga vanor än
+                  </div>
+                ) : (
+                  stats.habits.map((habit, i) => (
+                    <div
+                      key={habit.id}
+                      className="flex items-center gap-2 text-sm text-muted-foreground"
+                    >
+                      <span
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ background: CHART_COLORS[i % CHART_COLORS.length] }}
+                      />
+                      <span className="truncate">{habit.title}</span>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
@@ -228,6 +255,8 @@ export function ProfilePage() {
                 Översikt
               </div>
               <div className="grid grid-cols-2 gap-3">
+
+                {/* Längsta streak */}
                 <div
                   className="p-4 rounded-xl border"
                   style={{
@@ -239,10 +268,12 @@ export function ProfilePage() {
                     Längsta streak
                   </div>
                   <div className="text-2xl font-bold mt-1" style={{ color: "var(--primary)" }}>
-                    28
+                    {stats.longestRecordStreak}
                   </div>
                   <div className="text-xs text-muted-foreground/60 mt-1">Ditt rekord</div>
                 </div>
+
+                {/* Totalt loggat */}
                 <div
                   className="p-4 rounded-xl border"
                   style={{
@@ -253,9 +284,13 @@ export function ProfilePage() {
                   <div className="text-[11px] uppercase tracking-wider text-muted-foreground/60">
                     Totalt loggat
                   </div>
-                  <div className="text-2xl font-bold text-foreground mt-1">142</div>
+                  <div className="text-2xl font-bold text-foreground mt-1">
+                    {stats.totalCompletions}
+                  </div>
                   <div className="text-xs text-muted-foreground/60 mt-1">Registreringar</div>
                 </div>
+
+                {/* Veckosnitt */}
                 <div
                   className="p-4 rounded-xl border col-span-2"
                   style={{
@@ -267,13 +302,15 @@ export function ProfilePage() {
                     <div className="text-[11px] uppercase tracking-wider text-muted-foreground/60">
                       Veckosnitt
                     </div>
-                    <div className="text-sm font-bold text-foreground">78%</div>
+                    <div className="text-sm font-bold text-foreground">
+                      {stats.weeklyAverage}%
+                    </div>
                   </div>
                   <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--muted)" }}>
                     <div
-                      className="h-full rounded-full"
+                      className="h-full rounded-full transition-all duration-500 ease-out"
                       style={{
-                        width: "78%",
+                        width: `${stats.weeklyAverage}%`,
                         background: `linear-gradient(90deg, var(--primary), var(--chart-5))`,
                       }}
                     />
