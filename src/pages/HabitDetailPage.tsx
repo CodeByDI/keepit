@@ -988,83 +988,87 @@ export function HabitDetailPage() {
     <>
       {/* Header */}
 
-      <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+      <header className="flex h-16 shrink-0 items-center border-b">
 
-        <SidebarTrigger className="-ml-1" />
+        <div className="flex w-full max-w-4xl items-center gap-2 px-6">
 
-        <Separator
-          orientation="vertical"
-          className="mr-2 h-4"
-        />
+          <SidebarTrigger className="-ml-1" />
 
-        <Breadcrumb className="flex-1">
+          <Separator
+            orientation="vertical"
+            className="mr-2 h-4"
+          />
 
-          <BreadcrumbList>
+          <Breadcrumb className="flex-1">
 
-            <BreadcrumbItem>
+            <BreadcrumbList>
 
-              <button
-                type="button"
-                onClick={() =>
-                  navigate(
-                    "/statistik"
-                  )
-                }
-                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Statistik
-              </button>
+              <BreadcrumbItem>
 
-            </BreadcrumbItem>
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigate(
+                      "/statistik"
+                    )
+                  }
+                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Statistik
+                </button>
 
-            <BreadcrumbSeparator />
+              </BreadcrumbItem>
 
-            <BreadcrumbItem>
+              <BreadcrumbSeparator />
 
-              <BreadcrumbPage className="flex items-center gap-1.5">
+              <BreadcrumbItem>
 
-                <HabitIcon
-                  size={15}
-                  style={{
-                    color,
-                  }}
-                />
+                <BreadcrumbPage className="flex items-center gap-1.5">
 
-                {habit.title}
+                  <HabitIcon
+                    size={15}
+                    style={{
+                      color,
+                    }}
+                  />
 
-              </BreadcrumbPage>
+                  {habit.title}
 
-            </BreadcrumbItem>
+                </BreadcrumbPage>
 
-          </BreadcrumbList>
+              </BreadcrumbItem>
 
-        </Breadcrumb>
+            </BreadcrumbList>
 
-        {/* Edit + delete */}
+          </Breadcrumb>
 
-        <div className="flex items-center gap-2">
+          {/* Edit + delete */}
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={
-              openEditDialog
-            }
-          >
-            Redigera
-          </Button>
+          <div className="flex shrink-0 items-center gap-2">
 
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() =>
-              setDeleteOpen(
-                true
-              )
-            }
-          >
-            Ta bort
-          </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={
+                openEditDialog
+              }
+            >
+              Redigera
+            </Button>
+
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() =>
+                setDeleteOpen(
+                  true
+                )
+              }
+            >
+              Ta bort
+            </Button>
+
+          </div>
 
         </div>
 
