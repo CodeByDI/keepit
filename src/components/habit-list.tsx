@@ -59,13 +59,20 @@ function HabitRow({ habit, index, onToggle, readOnly }: { habit: Habit; index: n
       {!readOnly && (
         <button
           onClick={(e) => { e.stopPropagation(); onToggle(habit.id) }}
-          className="size-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors"
-          style={{
-            borderColor: habit.done ? color : "var(--border)",
-            backgroundColor: habit.done ? color : "transparent",
+          className="h-7 px-2.5 rounded-full border flex items-center gap-1 shrink-0 transition-colors text-xs font-medium"
+          style={habit.done ? {
+            borderColor: "var(--border)",
+            backgroundColor: "transparent",
+            color: "var(--muted-foreground)",
+            opacity: 0.5,
+          } : {
+            borderColor: color,
+            backgroundColor: color,
+            color: "white",
           }}
         >
-          {habit.done && <CheckIcon size={12} weight="bold" color="white" />}
+          <CheckIcon size={11} weight="bold" />
+          {habit.done ? "Klar" : "Markera klar"}
         </button>
       )}
       {readOnly && habit.done && (
