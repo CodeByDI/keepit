@@ -9,11 +9,10 @@ import { useNavigate } from "react-router-dom"
 import {
     BarbellIcon,
     BookOpenIcon,
-    CheckIcon,
     CodeIcon,
     DropIcon,
-    FireIcon,
     PersonSimpleRunIcon,
+    PlusIcon,
 } from "@phosphor-icons/react"
 
 import {
@@ -30,6 +29,7 @@ import {
 } from "@/components/statistics-chart"
 
 import { HabitsStatisticsTable } from "@/components/habits-statistics-table"
+import { HabitList } from "@/components/habit-list"
 
 import {
     SidebarTrigger,
@@ -56,6 +56,8 @@ import {
     type StoredHabit,
 } from "@/lib/habit-storage"
 
+import { notifyHabitDataUpdated } from "@/lib/habit-stats"
+
 // ─────────────────────────────────────────────
 // Periods
 // ─────────────────────────────────────────────
@@ -73,77 +75,31 @@ const STATISTICS_PERIOD_STORAGE_KEY =
 // Habit data from shared storage
 // ─────────────────────────────────────────────
 
-const iconMap: Record<
-    string,
-    ElementType
-> = {
-    book:
-        BookOpenIcon,
-
-    code:
-        CodeIcon,
-
-    run:
-        PersonSimpleRunIcon,
-
-    barbell:
-        BarbellIcon,
-
-    drop:
-        DropIcon,
-
-    fire:
-        FireIcon,
-}
-
-const iconClassMap: Record<
-    string,
-    string
-> = {
-    book:
-        "bg-fuchsia-500/10 text-fuchsia-500",
-
-    code:
-        "bg-pink-500/10 text-pink-500",
-
-    run:
-        "bg-violet-500/10 text-violet-500",
-
-    barbell:
-        "bg-purple-500/10 text-purple-500",
-
-    drop:
-        "bg-indigo-500/10 text-indigo-500",
-
-    fire:
-        "bg-orange-500/10 text-orange-500",
+const iconMap: Record<string, ElementType> = {
+    book: BookOpenIcon,
+    code: CodeIcon,
+    run: PersonSimpleRunIcon,
+    barbell: BarbellIcon,
+    drop: DropIcon,
+    fire: PlusIcon,
 }
 
 function buildHabitsFromStorage() {
-    return (
-        getHabitList() ?? []
-    ).map(
-        (
-            habit:
-                StoredHabit
-        ) => ({
-            id:
-                habit.id,
+    return (getHabitList() ?? []).map(
+        (habit: StoredHabit) => ({
+            id: habit.id,
 
-            name:
-                habit.title,
+            // Statistics koristi name
+            name: habit.title,
+
+            // HabitList koristi title, reminder i streak
+            title: habit.title,
+            reminder: habit.reminder ?? "",
+            streak: habit.streak ?? 0,
 
             icon:
-                iconMap[
-                habit.icon
-                ] ??
-                FireIcon,
-
-            iconClass:
-                iconClassMap[
-                habit.icon
-                ] ??
-                "bg-violet-500/10 text-violet-500",
+                iconMap[habit.icon] ??
+                PlusIcon,
         })
     )
 }
@@ -152,20 +108,16 @@ function buildHabitsFromStorage() {
 // Saved statistics period
 // ─────────────────────────────────────────────
 
-function getSavedPeriod():
-    StatisticsPeriod {
+function getSavedPeriod(): StatisticsPeriod {
     const savedPeriod =
         localStorage.getItem(
             STATISTICS_PERIOD_STORAGE_KEY
         )
 
     if (
-        savedPeriod ===
-        "7 dagar" ||
-        savedPeriod ===
-        "28 dagar" ||
-        savedPeriod ===
-        "Allt"
+        savedPeriod === "7 dagar" ||
+        savedPeriod === "28 dagar" ||
+        savedPeriod === "Allt"
     ) {
         return savedPeriod
     }
@@ -177,9 +129,7 @@ function getSavedPeriod():
 // Date helpers
 // ─────────────────────────────────────────────
 
-function normalizeDate(
-    date: Date
-) {
+function normalizeDate(date: Date) {
     return new Date(
         date.getFullYear(),
         date.getMonth(),
@@ -187,14 +137,8 @@ function normalizeDate(
     )
 }
 
-function dateFromKey(
-    dateKey: string
-) {
-    const [
-        year,
-        month,
-        day,
-    ] =
+function dateFromKey(dateKey: string) {
+    const [year, month, day] =
         dateKey
             .split("-")
             .map(Number)
@@ -206,61 +150,42 @@ function dateFromKey(
     )
 }
 
-function formatShortDate(
-    date: Date
-) {
+function formatShortDate(date: Date) {
     return date
         .toLocaleDateString(
             "sv-SE",
             {
-                day:
-                    "numeric",
-
-                month:
-                    "short",
+                day: "numeric",
+                month: "short",
             }
         )
-        .replace(
-            ".",
-            ""
-        )
+        .replace(".", "")
 }
 
-function formatMonth(
-    date: Date
-) {
+function formatMonth(date: Date) {
     return date
         .toLocaleDateString(
             "sv-SE",
             {
-                month:
-                    "short",
+                month: "short",
             }
         )
-        .replace(
-            ".",
-            ""
-        )
+        .replace(".", "")
 }
 
 function getDateRange(
     endDate: Date,
     numberOfDays: number
 ) {
-    const dates:
-        Date[] = []
+    const dates: Date[] = []
 
     for (
-        let offset =
-            numberOfDays -
-            1;
+        let offset = numberOfDays - 1;
         offset >= 0;
         offset--
     ) {
         const date =
-            new Date(
-                endDate
-            )
+            new Date(endDate)
 
         date.setDate(
             endDate.getDate() -
@@ -268,9 +193,7 @@ function getDateRange(
         )
 
         dates.push(
-            normalizeDate(
-                date
-            )
+            normalizeDate(date)
         )
     }
 
@@ -282,14 +205,11 @@ function getDateRange(
 // ─────────────────────────────────────────────
 
 function getCompletedCountForDay(
-    history:
-        HabitCompletion[],
-    date:
-        Date,
-    habits:
-        ReturnType<
-            typeof buildHabitsFromStorage
-        >
+    history: HabitCompletion[],
+    date: Date,
+    habits: ReturnType<
+        typeof buildHabitsFromStorage
+    >
 ) {
     return habits.filter(
         (habit) =>
@@ -302,59 +222,40 @@ function getCompletedCountForDay(
 }
 
 function getHistoryForPeriod(
-    history:
-        HabitCompletion[],
-    period:
-        StatisticsPeriod,
-    today:
-        Date
+    history: HabitCompletion[],
+    period: StatisticsPeriod,
+    today: Date
 ) {
     const endKey =
-        toDateKey(
-            today
-        )
+        toDateKey(today)
 
-    if (
-        period ===
-        "Allt"
-    ) {
+    if (period === "Allt") {
         return history.filter(
             (entry) =>
-                entry.date <=
-                endKey
+                entry.date <= endKey
         )
     }
 
     const numberOfDays =
-        period ===
-            "7 dagar"
+        period === "7 dagar"
             ? 7
             : 28
 
     const startDate =
-        new Date(
-            today
-        )
+        new Date(today)
 
     startDate.setDate(
         today.getDate() -
-        (
-            numberOfDays -
-            1
-        )
+        (numberOfDays - 1)
     )
 
     const startKey =
-        toDateKey(
-            startDate
-        )
+        toDateKey(startDate)
 
     return history.filter(
         (entry) =>
-            entry.date >=
-            startKey &&
-            entry.date <=
-            endKey
+            entry.date >= startKey &&
+            entry.date <= endKey
     )
 }
 
@@ -367,20 +268,14 @@ export function StatisticsPage() {
         useNavigate()
 
     // Same habit list used by StartPage.
-
-    const [
-        dailyHabits,
-    ] =
+    const [dailyHabits] =
         useState(
             () =>
                 buildHabitsFromStorage()
         )
 
     // Today stays stable while page is open.
-
-    const [
-        today,
-    ] =
+    const [today] =
         useState(
             () =>
                 normalizeDate(
@@ -389,14 +284,11 @@ export function StatisticsPage() {
         )
 
     // Same completion history used by Start / Calendar.
-
     const [
         history,
         setHistory,
     ] =
-        useState<
-            HabitCompletion[]
-        >(
+        useState<HabitCompletion[]>(
             () =>
                 ensureHabitHistorySeeded(
                     today
@@ -404,14 +296,11 @@ export function StatisticsPage() {
         )
 
     // Remember selected period after refresh.
-
     const [
         selectedPeriod,
         setSelectedPeriod,
     ] =
-        useState<
-            StatisticsPeriod
-        >(
+        useState<StatisticsPeriod>(
             () =>
                 getSavedPeriod()
         )
@@ -420,16 +309,11 @@ export function StatisticsPage() {
         selectedDate,
         setSelectedDate,
     ] =
-        useState<
-            string | null
-        >(
+        useState<string | null>(
             () =>
-                selectedPeriod ===
-                    "Allt"
+                selectedPeriod === "Allt"
                     ? null
-                    : toDateKey(
-                        today
-                    )
+                    : toDateKey(today)
         )
 
     // ───────────────────────────────────────────
@@ -456,9 +340,7 @@ export function StatisticsPage() {
     // ───────────────────────────────────────────
 
     const chartData =
-        useMemo<
-            StatisticsChartPoint[]
-        >(
+        useMemo<StatisticsChartPoint[]>(
             () => {
                 if (
                     selectedPeriod !==
@@ -474,9 +356,7 @@ export function StatisticsPage() {
                         today,
                         days
                     ).map(
-                        (
-                            date
-                        ) => {
+                        (date) => {
                             const completed =
                                 getCompletedCountForDay(
                                     history,
@@ -485,22 +365,18 @@ export function StatisticsPage() {
                                 )
 
                             const percentage =
-                                dailyHabits.length >
-                                    0
+                                dailyHabits.length > 0
                                     ? Math.round(
                                         (
                                             completed /
                                             dailyHabits.length
-                                        ) *
-                                        100
+                                        ) * 100
                                     )
                                     : 0
 
                             return {
                                 dateKey:
-                                    toDateKey(
-                                        date
-                                    ),
+                                    toDateKey(date),
 
                                 label:
                                     formatShortDate(
@@ -515,7 +391,6 @@ export function StatisticsPage() {
                 }
 
                 // Allt = monthly overview.
-
                 const monthGroups =
                     new Map<
                         string,
@@ -523,22 +398,16 @@ export function StatisticsPage() {
                     >()
 
                 const todayKey =
-                    toDateKey(
-                        today
-                    )
+                    toDateKey(today)
 
                 history
                     .filter(
-                        (
-                            entry
-                        ) =>
+                        (entry) =>
                             entry.date <=
                             todayKey
                     )
                     .forEach(
-                        (
-                            entry
-                        ) => {
+                        (entry) => {
                             const monthKey =
                                 entry.date.slice(
                                     0,
@@ -548,8 +417,7 @@ export function StatisticsPage() {
                             const existing =
                                 monthGroups.get(
                                     monthKey
-                                ) ??
-                                []
+                                ) ?? []
 
                             existing.push(
                                 entry
@@ -567,37 +435,28 @@ export function StatisticsPage() {
                         monthGroups.keys()
                     )
                         .sort()
-                        .slice(
-                            -12
-                        )
+                        .slice(-12)
 
                 return monthKeys.map(
-                    (
-                        monthKey
-                    ) => {
+                    (monthKey) => {
                         const entries =
                             monthGroups.get(
                                 monthKey
-                            ) ??
-                            []
+                            ) ?? []
 
                         const completed =
                             entries.filter(
-                                (
-                                    entry
-                                ) =>
+                                (entry) =>
                                     entry.completed
                             ).length
 
                         const percentage =
-                            entries.length >
-                                0
+                            entries.length > 0
                                 ? Math.round(
                                     (
                                         completed /
                                         entries.length
-                                    ) *
-                                    100
+                                    ) * 100
                                 )
                                 : 0
 
@@ -606,18 +465,13 @@ export function StatisticsPage() {
                             month,
                         ] =
                             monthKey
-                                .split(
-                                    "-"
-                                )
-                                .map(
-                                    Number
-                                )
+                                .split("-")
+                                .map(Number)
 
                         const date =
                             new Date(
                                 year,
-                                month -
-                                1,
+                                month - 1,
                                 1
                             )
 
@@ -626,9 +480,7 @@ export function StatisticsPage() {
                                 `${monthKey}-01`,
 
                             label:
-                                formatMonth(
-                                    date
-                                ),
+                                formatMonth(date),
 
                             completed:
                                 percentage,
@@ -648,37 +500,27 @@ export function StatisticsPage() {
     // Change period
     // ───────────────────────────────────────────
 
-    const handlePeriodChange =
-        (
-            period:
-                StatisticsPeriod
-        ) => {
-            setSelectedPeriod(
-                period
-            )
+    const handlePeriodChange = (
+        period: StatisticsPeriod
+    ) => {
+        setSelectedPeriod(
+            period
+        )
 
-            localStorage.setItem(
-                STATISTICS_PERIOD_STORAGE_KEY,
-                period
-            )
+        localStorage.setItem(
+            STATISTICS_PERIOD_STORAGE_KEY,
+            period
+        )
 
-            if (
-                period ===
-                "Allt"
-            ) {
-                setSelectedDate(
-                    null
-                )
-
-                return
-            }
-
-            setSelectedDate(
-                toDateKey(
-                    today
-                )
-            )
+        if (period === "Allt") {
+            setSelectedDate(null)
+            return
         }
+
+        setSelectedDate(
+            toDateKey(today)
+        )
+    }
 
     // ───────────────────────────────────────────
     // Selected date
@@ -694,12 +536,10 @@ export function StatisticsPage() {
     const selectedDayHabits =
         selectedDateObject
             ? dailyHabits.map(
-                (
-                    habit
-                ) => ({
+                (habit) => ({
                     ...habit,
 
-                    completed:
+                    done:
                         getHabitCompletion(
                             history,
                             habit.id,
@@ -709,60 +549,49 @@ export function StatisticsPage() {
             )
             : []
 
-    const completedCount =
-        selectedDayHabits.filter(
-            (
-                habit
-            ) =>
-                habit.completed
-        ).length
-
-    const selectedDayPercentage =
-        selectedDateObject &&
-            dailyHabits.length >
-            0
-            ? Math.round(
-                (
-                    completedCount /
-                    dailyHabits.length
-                ) *
-                100
-            )
-            : 0
-
     // ───────────────────────────────────────────
     // Toggle completion
     // ───────────────────────────────────────────
 
-    const toggleHabit =
-        (
-            habitId:
-                number
-        ) => {
-            if (
-                !selectedDateObject
-            ) {
-                return
-            }
-
-            const currentlyCompleted =
-                getHabitCompletion(
-                    history,
-                    habitId,
-                    selectedDateObject
-                )
-
-            const nextHistory =
-                setHabitCompletion(
-                    habitId,
-                    selectedDateObject,
-                    !currentlyCompleted
-                )
-
-            setHistory(
-                nextHistory
-            )
+    const toggleHabit = (
+        habitId: number
+    ) => {
+        if (
+            !selectedDateObject
+        ) {
+            return
         }
+
+        // Only today's habits can be changed.
+        if (
+            toDateKey(
+                selectedDateObject
+            ) !==
+            toDateKey(today)
+        ) {
+            return
+        }
+
+        const currentlyCompleted =
+            getHabitCompletion(
+                history,
+                habitId,
+                selectedDateObject
+            )
+
+        const nextHistory =
+            setHabitCompletion(
+                habitId,
+                selectedDateObject,
+                !currentlyCompleted
+            )
+
+        setHistory(
+            nextHistory
+        )
+
+        notifyHabitDataUpdated()
+    }
 
     // ───────────────────────────────────────────
     // Summary
@@ -770,9 +599,7 @@ export function StatisticsPage() {
 
     const totalCompleted =
         periodHistory.filter(
-            (
-                entry
-            ) =>
+            (entry) =>
                 entry.completed
         ).length
 
@@ -781,35 +608,27 @@ export function StatisticsPage() {
             () => {
                 const results =
                     dailyHabits.map(
-                        (
-                            habit
-                        ) => {
+                        (habit) => {
                             const entries =
                                 periodHistory.filter(
-                                    (
-                                        entry
-                                    ) =>
+                                    (entry) =>
                                         entry.habitId ===
                                         habit.id
                                 )
 
                             const completed =
                                 entries.filter(
-                                    (
-                                        entry
-                                    ) =>
+                                    (entry) =>
                                         entry.completed
                                 ).length
 
                             const percentage =
-                                entries.length >
-                                    0
+                                entries.length > 0
                                     ? Math.round(
                                         (
                                             completed /
                                             entries.length
-                                        ) *
-                                        100
+                                        ) * 100
                                     )
                                     : 0
 
@@ -821,15 +640,11 @@ export function StatisticsPage() {
                     )
 
                 if (
-                    results.length ===
-                    0
+                    results.length === 0
                 ) {
                     return {
-                        name:
-                            "-",
-
-                        percentage:
-                            0,
+                        name: "-",
+                        percentage: 0,
                     }
                 }
 
@@ -842,9 +657,7 @@ export function StatisticsPage() {
                             best.percentage
                             ? current
                             : best,
-                    results[
-                    0
-                    ]
+                    results[0]
                 )
             },
             [
@@ -928,30 +741,24 @@ export function StatisticsPage() {
         )
 
     const historyPercentage =
-        historyTotal >
-            0
+        historyTotal > 0
             ? Math.round(
                 (
                     historyCompleted /
                     historyTotal
-                ) *
-                100
+                ) * 100
             )
             : 0
 
     const donutData = [
         {
-            name:
-                "Klara",
-
+            name: "Klara",
             value:
                 historyCompleted,
         },
 
         {
-            name:
-                "Ej klara",
-
+            name: "Ej klara",
             value:
                 historyRemaining,
         },
@@ -966,7 +773,6 @@ export function StatisticsPage() {
             {/* Application header */}
 
             <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-
                 <SidebarTrigger className="-ml-1" />
 
                 <Separator
@@ -983,21 +789,17 @@ export function StatisticsPage() {
                         </BreadcrumbItem>
                     </BreadcrumbList>
                 </Breadcrumb>
-
             </header>
 
             {/* Content */}
 
             <main className="w-full p-6">
-
                 <div className="flex w-full max-w-[850px] flex-col gap-6">
 
                     {/* Page title */}
 
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-
                         <div>
-
                             <h1
                                 className="text-2xl font-semibold tracking-tight"
                                 style={{
@@ -1011,17 +813,13 @@ export function StatisticsPage() {
                             <p className="text-sm text-muted-foreground opacity-60">
                                 {subtitle}
                             </p>
-
                         </div>
 
                         {/* Period selector */}
 
                         <div className="flex w-fit rounded-lg border bg-muted/30 p-1">
-
                             {periods.map(
-                                (
-                                    period
-                                ) => (
+                                (period) => (
                                     <button
                                         key={
                                             period
@@ -1037,37 +835,29 @@ export function StatisticsPage() {
                                             )
                                         }
                                         className={`rounded-md px-3 py-1.5 text-xs transition-colors sm:text-sm ${selectedPeriod ===
-                                            period
-                                            ? "bg-background text-foreground shadow-sm"
-                                            : "text-muted-foreground hover:text-foreground"
+                                                period
+                                                ? "bg-background text-foreground shadow-sm"
+                                                : "text-muted-foreground hover:text-foreground"
                                             }`}
                                     >
-                                        {
-                                            period
-                                        }
+                                        {period}
                                     </button>
                                 )
                             )}
-
                         </div>
-
                     </div>
 
                     {/* Summary cards */}
 
                     <div className="grid gap-4 md:grid-cols-3">
-
                         {summaryCards.map(
-                            (
-                                card
-                            ) => (
+                            (card) => (
                                 <article
                                     key={
                                         card.title
                                     }
                                     className="rounded-xl border bg-card p-5 text-card-foreground"
                                 >
-
                                     <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
                                         {
                                             card.title
@@ -1076,9 +866,9 @@ export function StatisticsPage() {
 
                                     <p
                                         className={`mt-4 font-semibold ${card.title ===
-                                            "Bästa vana"
-                                            ? "text-lg"
-                                            : "text-3xl"
+                                                "Bästa vana"
+                                                ? "text-lg"
+                                                : "text-3xl"
                                             }`}
                                     >
                                         {
@@ -1091,11 +881,9 @@ export function StatisticsPage() {
                                             card.description
                                         }
                                     </p>
-
                                 </article>
                             )
                         )}
-
                     </div>
 
                     {/* Chart */}
@@ -1115,207 +903,75 @@ export function StatisticsPage() {
                         }
                     />
 
-                    {/* Selected day */}
+                    {/* Selected day — same HabitList as StartPage */}
 
                     {selectedPeriod !==
                         "Allt" &&
                         selectedDateObject && (
-
-                            <article className="overflow-hidden rounded-xl border bg-card">
-
-                                {/* Daily header */}
-
-                                <div className="flex flex-col gap-4 border-b px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-
-                                    <div>
-
-                                        <h2 className="text-base font-semibold">
-                                            Dagens vanor
-                                        </h2>
-
-                                        <p className="mt-1 text-xs text-muted-foreground">
-                                            Vald dag:{" "}
+                            <HabitList
+                                habits={
+                                    selectedDayHabits
+                                }
+                                onToggle={
+                                    toggleHabit
+                                }
+                                readOnly={
+                                    toDateKey(
+                                        selectedDateObject
+                                    ) !==
+                                    toDateKey(
+                                        today
+                                    )
+                                }
+                                isFuture={
+                                    selectedDateObject >
+                                    today
+                                }
+                                selectedDateLabel={
+                                    selectedDateObject
+                                        .toLocaleDateString(
+                                            "sv-SE",
                                             {
-                                                formatShortDate(
-                                                    selectedDateObject
-                                                )
+                                                weekday:
+                                                    "long",
+                                                day:
+                                                    "numeric",
+                                                month:
+                                                    "long",
                                             }
-                                        </p>
-
-                                    </div>
-
-                                    <div className="flex items-center gap-3">
-
-                                        <div className="text-right">
-
-                                            <p className="text-base font-semibold">
-                                                {
-                                                    completedCount
-                                                }{" "}
-                                                av{" "}
-                                                {
-                                                    dailyHabits.length
-                                                }
-                                            </p>
-
-                                            <p className="text-xs text-muted-foreground">
-                                                {
-                                                    selectedDayPercentage
-                                                }
-                                                % klarat
-                                            </p>
-
-                                        </div>
-
-                                        <div className="flex h-10 w-10 items-center justify-center rounded-full border bg-muted">
-
-                                            <span className="text-xs font-semibold">
-                                                {
-                                                    selectedDayPercentage
-                                                }
-                                                %
-                                            </span>
-
-                                        </div>
-
-                                    </div>
-
-                                </div>
-
-                                {/* Progress */}
-
-                                <div className="h-1 w-full bg-muted">
-
-                                    <div
-                                        className="h-full bg-violet-500 transition-all duration-300"
-                                        style={{
-                                            width:
-                                                `${selectedDayPercentage}%`,
-                                        }}
-                                    />
-
-                                </div>
-
-                                {/* Habit rows */}
-
-                                <div className="divide-y">
-
-                                    {selectedDayHabits.map(
-                                        (
-                                            habit
-                                        ) => {
-                                            const HabitIcon =
-                                                habit.icon
-
-                                            return (
-                                                <div
-                                                    key={
-                                                        habit.id
-                                                    }
-                                                    className="flex flex-col gap-3 px-5 py-3 sm:flex-row sm:items-center sm:justify-between"
-                                                >
-
-                                                    <div className="flex items-center gap-3">
-
-                                                        <span
-                                                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${habit.iconClass}`}
-                                                        >
-
-                                                            <HabitIcon
-                                                                size={
-                                                                    18
-                                                                }
-                                                            />
-
-                                                        </span>
-
-                                                        <div>
-
-                                                            <p className="text-sm font-medium">
-                                                                {
-                                                                    habit.name
-                                                                }
-                                                            </p>
-
-                                                            <button
-                                                                type="button"
-                                                                onClick={() =>
-                                                                    navigate(
-                                                                        `/habits/${habit.id}`
-                                                                    )
-                                                                }
-                                                                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-                                                            >
-                                                                Visa detaljer
-                                                            </button>
-
-                                                        </div>
-
-                                                    </div>
-
-                                                    <button
-                                                        type="button"
-                                                        aria-pressed={
-                                                            habit.completed
-                                                        }
-                                                        onClick={() =>
-                                                            toggleHabit(
-                                                                habit.id
-                                                            )
-                                                        }
-                                                        className={`flex min-w-32 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium transition-all ${habit.completed
-                                                            ? "border-violet-500 bg-violet-500 text-white"
-                                                            : "border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground"
-                                                            }`}
-                                                    >
-
-                                                        <CheckIcon
-                                                            size={
-                                                                15
-                                                            }
-                                                            weight="bold"
-                                                        />
-
-                                                        {
-                                                            habit.completed
-                                                                ? "Klar"
-                                                                : "Markera klar"
-                                                        }
-
-                                                    </button>
-
-                                                </div>
-                                            )
-                                        }
-                                    )}
-
-                                </div>
-
-                            </article>
+                                        )
+                                        .replace(
+                                            /^./,
+                                            (
+                                                character
+                                            ) =>
+                                                character.toUpperCase()
+                                        )
+                                }
+                                shortDateLabel={
+                                    formatShortDate(
+                                        selectedDateObject
+                                    )
+                                }
+                            />
                         )}
 
                     {/* History */}
 
                     {selectedPeriod !==
                         "Allt" && (
-
                             <article className="rounded-xl border bg-card p-5">
-
                                 <div className="mb-4">
-
                                     <h2 className="text-base font-semibold">
                                         Historik
                                     </h2>
 
                                     <p className="mt-1 text-xs text-muted-foreground">
-                                        {
-                                            selectedPeriod ===
-                                                "7 dagar"
-                                                ? "Sammanfattning för senaste 7 dagarna"
-                                                : "Sammanfattning för senaste 28 dagarna"
-                                        }
+                                        {selectedPeriod ===
+                                            "7 dagar"
+                                            ? "Sammanfattning för senaste 7 dagarna"
+                                            : "Sammanfattning för senaste 28 dagarna"}
                                     </p>
-
                                 </div>
 
                                 <div className="grid gap-6 sm:grid-cols-2 sm:items-center">
@@ -1323,14 +979,11 @@ export function StatisticsPage() {
                                     {/* Donut */}
 
                                     <div className="relative mx-auto h-44 w-full max-w-56">
-
                                         <ResponsiveContainer
                                             width="100%"
                                             height="100%"
                                         >
-
                                             <PieChart>
-
                                                 <Pie
                                                     data={
                                                         donutData
@@ -1353,19 +1006,13 @@ export function StatisticsPage() {
                                                         0
                                                     }
                                                 >
-
                                                     <Cell fill="#8b5cf6" />
-
                                                     <Cell fill="var(--muted)" />
-
                                                 </Pie>
-
                                             </PieChart>
-
                                         </ResponsiveContainer>
 
                                         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-
                                             <span className="text-2xl font-bold">
                                                 {
                                                     historyPercentage
@@ -1376,25 +1023,19 @@ export function StatisticsPage() {
                                             <span className="text-[11px] text-muted-foreground">
                                                 klarat
                                             </span>
-
                                         </div>
-
                                     </div>
 
                                     {/* History numbers */}
 
                                     <div className="grid gap-2">
-
                                         <div className="flex items-center justify-between rounded-lg border p-3">
-
                                             <div className="flex items-center gap-2">
-
                                                 <span className="h-2.5 w-2.5 rounded-full bg-violet-500" />
 
                                                 <span className="text-xs">
                                                     Klara registreringar
                                                 </span>
-
                                             </div>
 
                                             <span className="text-sm font-semibold">
@@ -1402,19 +1043,15 @@ export function StatisticsPage() {
                                                     historyCompleted
                                                 }
                                             </span>
-
                                         </div>
 
                                         <div className="flex items-center justify-between rounded-lg border p-3">
-
                                             <div className="flex items-center gap-2">
-
                                                 <span className="h-2.5 w-2.5 rounded-full bg-muted-foreground/25" />
 
                                                 <span className="text-xs">
                                                     Ej klara
                                                 </span>
-
                                             </div>
 
                                             <span className="text-sm font-semibold">
@@ -1422,11 +1059,9 @@ export function StatisticsPage() {
                                                     historyRemaining
                                                 }
                                             </span>
-
                                         </div>
 
                                         <div className="flex items-center justify-between rounded-lg bg-muted/40 p-3">
-
                                             <span className="text-xs text-muted-foreground">
                                                 Totalt möjliga
                                             </span>
@@ -1436,13 +1071,9 @@ export function StatisticsPage() {
                                                     historyTotal
                                                 }
                                             </span>
-
                                         </div>
-
                                     </div>
-
                                 </div>
-
                             </article>
                         )}
 
@@ -1462,9 +1093,7 @@ export function StatisticsPage() {
                     />
 
                     <div className="h-4" />
-
                 </div>
-
             </main>
         </>
     )
