@@ -2,10 +2,8 @@
 import { useEffect, useState } from "react"
 import {
   getHabitList,
-  getHabitHistory,
   getHabitCompletion,
   ensureHabitHistorySeeded,
-  toDateKey,
   type HabitCompletion,
   type StoredHabit,
 } from "@/lib/habit-storage"

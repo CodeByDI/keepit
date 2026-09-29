@@ -10,13 +10,7 @@ import {
   GearIcon,
   SignOutIcon,
   PencilSimpleIcon,
-  CaretRightIcon,
-  BookOpenIcon,
-  CodeIcon,
-  PersonSimpleRunIcon,
-  BarbellIcon,
-  DropIcon,
-  PlusIcon,
+  CaretRightIcon
 } from "@phosphor-icons/react"
 import { useNavigate } from "react-router-dom"
 import { EditProfileDialog } from "@/components/edit-profile-dialog"
@@ -32,14 +26,6 @@ const defaultUser = {
 }
 
 // ─── Icon map (matches StartPage) ──────────────────────────────────────────
-const ICON_MAP: Record<string, React.ElementType> = {
-  book: BookOpenIcon,
-  code: CodeIcon,
-  run: PersonSimpleRunIcon,
-  barbell: BarbellIcon,
-  drop: DropIcon,
-  fire: PlusIcon,
-}
 
 const CHART_COLORS = [
   "var(--chart-1)",
